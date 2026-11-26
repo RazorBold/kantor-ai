@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kantor AI · Ipul HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;1,800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d1726;--panel:rgba(14,22,36,.82);--line:rgba(255,255,255,.09);--ink:#eef3fb;--quiet:#93a3ba;--lime:#c8f04a;
+        --ok:#3ddc84;--wait:#ffc93c;--idle:#8a96a8;--err:#ff5d5d}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,sans-serif;overflow:hidden}
+  #app{position:fixed;inset:0}
+  canvas{display:block}
+  .glass{background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+  #brand{position:fixed;left:18px;top:16px;padding:14px 18px;z-index:5}
+  #brand h1{margin:0;font-size:18px;font-weight:800;letter-spacing:.2px}
+  #brand h1 span{color:var(--lime)}
+  #brand p{margin:4px 0 0;font-size:12px;color:var(--quiet)}
+  #team{position:fixed;left:18px;top:96px;width:250px;padding:12px;z-index:5;max-height:calc(100% - 190px);overflow:auto}
+  #team h2,#detail h2{margin:2px 6px 10px;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--quiet);font-weight:700}
+  .member{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;cursor:pointer;transition:background .15s}
+  .member:hover{background:rgba(255,255,255,.06)} .member.sel{background:rgba(200,240,74,.12);outline:1px solid rgba(200,240,74,.35)}
+  .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#10202e;flex:none}
+  .mname{font-size:13px;font-weight:700} .mrole{font-size:11px;color:var(--quiet)}
+  .dot{width:9px;height:9px;border-radius:50%;margin-left:auto;flex:none;box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+  .s-working{background:var(--ok)} .s-waiting{background:var(--wait)} .s-idle{background:var(--idle)} .s-limit{background:var(--err)} .s-asking{background:#a78bfa}
+  .tabs{display:flex;gap:4px;margin:12px 0 4px;background:rgba(255,255,255,.05);padding:4px;border-radius:10px}
+  .tabs button{flex:1;background:none;border:0;color:var(--quiet);font:inherit;font-size:12px;font-weight:700;padding:7px 4px;border-radius:7px;cursor:pointer}
+  .tabs button.on{background:rgba(200,240,74,.16);color:var(--ink)}
+  .skill{display:inline-block;font-size:11px;font-weight:700;padding:4px 9px;margin:0 6px 6px 0;border-radius:8px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3)}
+  .mem{font-size:12px;padding:7px 9px;margin:5px 0;border-radius:8px;background:rgba(255,255,255,.05);line-height:1.4}
+  .mem i{font-style:normal;color:var(--quiet);font-size:10.5px;display:block}
+  .qbox{border:1px solid rgba(167,139,250,.5);background:rgba(167,139,250,.1);border-radius:12px;padding:10px;margin:10px 0;font-size:12.5px;line-height:1.45}
+  .qbox .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .qbox .opts button{background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer}
+  .qbox .opts button:hover{background:#a78bfa;color:#140d2b}
+  #inboxQ{display:none;margin:0 6px 10px;font-size:12px;font-weight:700;color:#c4b5fd;cursor:pointer}
+  #detail{position:fixed;right:18px;top:16px;width:330px;padding:16px;z-index:5;display:none;max-height:calc(100% - 110px);overflow:auto}
+  #detail .head{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  #detail .head .av{width:44px;height:44px;font-size:16px}
+  #detail .close{margin-left:auto;background:none;border:0;color:var(--quiet);font-size:20px;cursor:pointer}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.07)}
+  .kv{font-size:12.5px;line-height:1.5;margin:10px 0}
+  .kv b{display:block;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--quiet);margin-bottom:3px}
+  .log{font-size:12px;border-left:2px solid var(--line);padding-left:10px;margin:6px 0;color:#cdd7e5}
+  .log i{color:var(--quiet);font-style:normal;margin-right:6px}
+  form{display:flex;gap:8px;margin-top:12px}
+  input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);font:inherit;font-size:13px;outline:none}
+  input:focus{border-color:rgba(200,240,74,.6)}
+  button.pri{background:var(--lime);color:#13230c;border:0;border-radius:10px;padding:0 14px;font:inherit;font-weight:800;font-size:13px;cursor:pointer}
+  #bar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:8px;padding:8px;z-index:5}
+  #bar button{background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+  #bar button:hover{background:rgba(255,255,255,.12)} #bar button.hot{background:var(--lime);color:#13230c;border-color:transparent}
+  #legend{position:fixed;right:18px;bottom:18px;padding:10px 14px;z-index:4;font-size:11.5px;display:flex;gap:14px;color:var(--quiet)}
+  #legend span{display:flex;align-items:center;gap:6px}
+  #feed{position:fixed;left:18px;bottom:18px;width:250px;padding:10px 12px;z-index:4;font-size:11.5px;max-height:150px;overflow:hidden}
+  #feed div{padding:3px 0;color:#cdd7e5;border-bottom:1px solid rgba(255,255,255,.04)} #feed div b{color:var(--lime)}
+  .tag{transform:translateY(-6px);pointer-events:auto;cursor:pointer;user-select:none;text-align:center}
+  .tag .pill{display:inline-flex;align-items:center;gap:6px;background:rgba(10,16,28,.82);border:1px solid rgba(255,255,255,.14);color:#fff;
+             padding:4px 9px 4px 7px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+  .tag .pill i{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .tag .sub{font-size:10px;color:#c4cfdd;margin-top:2px;text-shadow:0 1px 3px #000}
+  .bubble{background:#fffdf3;color:#173f22;font-size:12px;font-weight:700;padding:8px 11px;border-radius:14px;max-width:200px;white-space:normal;
+          box-shadow:0 10px 24px rgba(0,0,0,.35);position:relative;text-align:left;line-height:1.35}
+  .bubble:after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-top-color:#fffdf3;border-bottom:0}
+  #loading{position:fixed;inset:0;display:grid;place-items:center;z-index:9;background:var(--bg);font-weight:700;color:var(--quiet);transition:opacity .5s}
+  @media (max-width:820px){#team,#feed,#legend{display:none}#detail{left:12px;right:12px;width:auto;top:auto;bottom:80px;max-height:45%}#brand{left:10px;top:10px}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+            "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="loading">Menyiapkan kantor…</div>
+
+<div id="brand" class="glass"><h1>Kantor AI · <span>Ipul HQ</span></h1><p>Prototipe 3D · klik agent atau mejanya · <span id="fps">–</span> fps</p></div>
+<div id="team" class="glass"><h2>Tim agent</h2><div id="inboxQ"></div><div id="teamList"></div></div>
+<div id="detail" class="glass"></div>
+<div id="feed" class="glass"></div>
+<div id="legend" class="glass">
+  <span><i class="dot s-working"></i>Bekerja</span><span><i class="dot s-waiting"></i>Menunggu persetujuan</span>
+  <span><i class="dot s-asking"></i>Bertanya</span><span><i class="dot s-idle"></i>Idle</span><span><i class="dot s-limit"></i>Limit / error</span>
+</div>
+<div id="bar" class="glass">
+  <button id="btnDemo" class="hot">▶ Demo alur: Opty → SA → RAB → Invoice → Finance</button>
+  <button id="btnNight">🌙 Mode malam</button>
+  <button id="btnLite">⚡ Mode ringan</button>
+  <button id="btnReset">⟲ Reset kamera</button>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ============================== ENGINE ============================== */
+try { await Promise.race([document.fonts.load('italic 800 100px "Plus Jakarta Sans"'), new Promise(r => setTimeout(r, 2500))]); } catch (e) {}
+const app = document.getElementById('app');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+app.appendChild(renderer.domElement);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(innerWidth, innerHeight);
+Object.assign(labelRenderer.domElement.style, { position: 'fixed', inset: '0', pointerEvents: 'none' });
+app.appendChild(labelRenderer.domElement);
+
+const scene = new THREE.Scene();
+const BG_DAY = new THREE.Color('#0f1b2d'), BG_NIGHT = new THREE.Color('#060a12');
+scene.background = BG_DAY.clone();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+scene.environmentIntensity = 0.55;
+
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.1, 300);
+const CAM_HOME = new THREE.Vector3(27, 24, 30), TARGET_HOME = new THREE.Vector3(0, -0.6, 0.5);
+camera.position.copy(CAM_HOME);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.copy(TARGET_HOME);
+controls.enableDamping = true; controls.dampingFactor = 0.07;
+controls.minDistance = 8; controls.maxDistance = 70; controls.maxPolarAngle = Math.PI * 0.47;
+
+const hemi = new THREE.HemisphereLight('#dfe9ff', '#3b3226', 0.9); scene.add(hemi);
+const sun = new THREE.DirectionalLight('#fff3df', 2.2);
+sun.position.set(14, 24, 12); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -20, right: 20, top: 16, bottom: -16, near: 1, far: 70 });
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+scene.add(sun);
+
+/* ============================== UTIL ============================== */
+let seed = 1337;
+const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const R = (a, b) => a + (b - a) * rnd();
+const lamps = []; // emissive things that glow at night
+const screens = [];
+
+function mesh(geo, mat, x = 0, y = 0, z = 0, parent = scene, cast = true, recv = true) {
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = recv;
+  parent.add(m); return m;
+}
+const rbox = (w, h, d, r = 0.02, s = 3) => new RoundedBoxGeometry(w, h, d, s, Math.min(r, w / 2, h / 2, d / 2));
+
+/* ======================= PROCEDURAL PBR TEXTURES ======================= */
+// Each set = colour map + roughness map + bump (height) map drawn on canvases.
+function pbrSet(size, draw, repeat = [1, 1]) {
+  const mk = () => { const c = document.createElement('canvas'); c.width = c.height = size; return c; };
+  const col = mk(), hgt = mk(), rgh = mk();
+  draw(col.getContext('2d'), hgt.getContext('2d'), rgh.getContext('2d'), size);
+  const tex = (c, srgb) => { const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy(); if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
+  return { map: tex(col, true), bumpMap: tex(hgt, false), roughnessMap: tex(rgh, false) };
+}
+function noise(ctx, s, n, rMin, rMax, colorFn) {
+  for (let i = 0; i < n; i++) { ctx.fillStyle = colorFn(); ctx.beginPath(); ctx.arc(rnd() * s, rnd() * s, R(rMin, rMax), 0, 7); ctx.fill(); }
+}
+const hsl = (h, s, l, a = 1) => `hsla(${h},${s}%,${l}%,${a})`;
+
+function woodPlanks(baseH, baseS, baseL, planks = 6, repeat = [4, 4]) {
+  return pbrSet(1024, (c, h, r, s) => {
+    h.fillStyle = '#808080'; h.fillRect(0, 0, s, s); r.fillStyle = '#7a7a7a'; r.fillRect(0, 0, s, s);
+    const pw = s / planks;
+    for (let i = 0; i < planks; i++) {
+      let y = -R(0, s * 0.6);
+      while (y < s) {
+        const len = R(s * 0.35, s * 0.8), L = baseL + R(-6, 6), Hh = baseH + R(-4, 4);
+        c.fillStyle = hsl(Hh, baseS + R(-6, 6), L); c.fillRect(i * pw, y, pw, len);
+        for (let g = 0; g < 26; g++) { // grain
+          c.strokeStyle = hsl(Hh, baseS, L - R(4, 14), R(0.08, 0.25)); c.lineWidth = R(0.6, 2.2);
+          const gx = i * pw + R(2, pw - 2); c.beginPath(); c.moveTo(gx, y);
+          for (let k = 0; k <= 8; k++) c.lineTo(gx + Math.sin(k * 0.9 + g) * R(0.5, 3), y + len * k / 8); c.stroke();
+          h.strokeStyle = `rgba(150,150,150,${R(.1, .3)})`; h.lineWidth = 1; h.beginPath(); h.moveTo(gx, y); h.lineTo(gx + R(-2, 2), y + len); h.stroke();
+        }
+        if (rnd() < 0.25) { const kx = i * pw + R(8, pw - 8), ky = y + R(10, len - 10); c.fillStyle = hsl(Hh - 4, baseS, L - 16, .6);
+          c.beginPath(); c.ellipse(kx, ky, R(3, 7), R(6, 12), 0, 0, 7); c.fill(); }
+        r.fillStyle = `rgb(${R(95, 140)|0},0,0)`.replace(/rgb\((\d+),0,0\)/, (m, v) => `rgb(${v},${v},${v})`); r.fillRect(i * pw, y, pw, len);
+        h.fillStyle = '#2a2a2a'; h.fillRect(i * pw, y, pw, 3); c.fillStyle = hsl(Hh, baseS, L - 22, .7); c.fillRect(i * pw, y, pw, 2);
+        y += len;
+      }
+      h.fillStyle = '#202020'; h.fillRect(i * pw, 0, 3, s); c.fillStyle = 'rgba(30,18,8,.55)'; c.fillRect(i * pw, 0, 2, s);
+    }
+  }, repeat);
+}
+function concrete(l = 72, repeat = [6, 6]) {
+  return pbrSet(1024, (c, h, r, s) => {
+    c.fillStyle = hsl(210, 6, l); c.fillRect(0, 0, s, s); h.fillStyle = '#808080'; h.fillRect(0, 0, s, s); r.fillStyle = '#b0b0b0'; r.fillRect(0, 0, s, s);
+    noise(c, s, 9000, .5, 2.2, () => hsl(210, 5, l + R(-12, 10), R(.1, .35)));
+    noise(c, s, 260, 10, 60, () => hsl(30, 8, l + R(-8, 6), .05));
+    noise(h, s, 7000, .5, 2, () => `rgba(${rnd() < .5 ? 40 : 210},${rnd() < .5 ? 40 : 210},${rnd() < .5 ? 40 : 210},.25)`);
+    noise(r, s, 400, 8, 50, () => `rgba(${R(120, 220)|0},${R(120, 220)|0},${R(120, 220)|0},.15)`);
+  }, repeat);
+}
+function carpet(hue, sat, l, repeat = [5, 5]) {
+  return pbrSet(512, (c, h, r, s) => {
+    c.fillStyle = hsl(hue, sat, l); c.fillRect(0, 0, s, s); h.fillStyle = '#808080'; h.fillRect(0, 0, s, s); r.fillStyle = '#e6e6e6'; r.fillRect(0, 0, s, s);
+    noise(c, s, 22000, .4, 1.2, () => hsl(hue, sat, l + R(-9, 9), .6));
+    noise(h, s, 20000, .4, 1.1, () => `rgba(${rnd() < .5 ? 20 : 235},${rnd() < .5 ? 20 : 235},${rnd() < .5 ? 20 : 235},.5)`);
+    c.strokeStyle = hsl(hue, sat, l - 6, .5); c.lineWidth = 2; c.strokeRect(1, 1, s - 2, s - 2); // carpet tile seams
+    h.strokeStyle = '#303030'; h.lineWidth = 3; h.strokeRect(1, 1, s - 2, s - 2);
+  }, repeat);
+}
+function fabric(hue, sat, l, repeat = [3, 3]) {
+  return pbrSet(256, (c, h, r, s) => {
+    c.fillStyle = hsl(hue, sat, l); c.fillRect(0, 0, s, s); h.fillStyle = '#808080'; h.fillRect(0, 0, s, s); r.fillStyle = '#efefef'; r.fillRect(0, 0, s, s);
+    for (let i = 0; i < s; i += 2) {
+      c.fillStyle = hsl(hue, sat, l + (i % 4 ? 4 : -4), .5); c.fillRect(0, i, s, 1); c.fillRect(i, 0, 1, s);
+      h.fillStyle = i % 4 ? 'rgba(220,220,220,.5)' : 'rgba(40,40,40,.5)'; h.fillRect(0, i, s, 1); h.fillRect(i, 0, 1, s);
+    }
+    noise(c, s, 1500, .3, .9, () => hsl(hue, sat, l + R(-10, 10), .4));
+  }, repeat);
+}
+function tiles(repeat = [4, 4]) {
+  return pbrSet(512, (c, h, r, s) => {
+    const n = 4, t = s / n; h.fillStyle = '#202020'; h.fillRect(0, 0, s, s); r.fillStyle = '#555'; r.fillRect(0, 0, s, s);
+    c.fillStyle = '#c9c6bf'; c.fillRect(0, 0, s, s);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      c.fillStyle = hsl(40, 6, R(86, 92)); c.fillRect(i * t + 3, j * t + 3, t - 6, t - 6);
+      h.fillStyle = '#a0a0a0'; h.fillRect(i * t + 3, j * t + 3, t - 6, t - 6);
+      r.fillStyle = `rgb(${R(40, 70)|0},${R(40, 70)|0},${R(40, 70)|0})`; r.fillRect(i * t + 3, j * t + 3, t - 6, t - 6);
+    }
+    noise(c, s, 1500, .4, 1.4, () => hsl(40, 5, R(70, 95), .3));
+  }, repeat);
+}
+function brushedMetal(l = 70) {
+  return pbrSet(256, (c, h, r, s) => {
+    c.fillStyle = hsl(210, 4, l); c.fillRect(0, 0, s, s); h.fillStyle = '#808080'; h.fillRect(0, 0, s, s); r.fillStyle = '#6a6a6a'; r.fillRect(0, 0, s, s);
+    for (let i = 0; i < 900; i++) { const y = rnd() * s; c.fillStyle = hsl(210, 4, l + R(-10, 10), .25); c.fillRect(0, y, s, R(.3, 1));
+      r.fillStyle = `rgba(${R(60, 140)|0},${R(60, 140)|0},${R(60, 140)|0},.3)`; r.fillRect(0, y, s, 1); }
+  }, [1, 1]);
+}
+const std = (o) => new THREE.MeshStandardMaterial(o);
+function pbrMat(set, extra = {}) { return std({ map: set.map, bumpMap: set.bumpMap, roughnessMap: set.roughnessMap, bumpScale: 0.6, roughness: 1, ...extra }); }
+
+/* ============================== MATERIALS ============================== */
+const M = {
+  floor: pbrMat(concrete(78, [8, 6]), { bumpScale: .3 }),
+  slabEdge: pbrMat(concrete(88, [10, 1]), { bumpScale: .2 }),
+  oak: pbrMat(woodPlanks(32, 42, 58, 6, [5, 4])),
+  deck: pbrMat(woodPlanks(22, 48, 34, 7, [5, 4])),
+  deskTop: pbrMat(woodPlanks(34, 30, 72, 4, [1, 1]), { bumpScale: .25 }),
+  walnut: pbrMat(woodPlanks(24, 40, 30, 4, [1, 1]), { bumpScale: .25 }),
+  carpetEng: pbrMat(carpet(215, 14, 28, [6, 3])),
+  carpetMeet: pbrMat(carpet(200, 22, 36, [4, 3])),
+  rubber: pbrMat(carpet(220, 8, 18, [4, 2]), { bumpScale: .3 }),
+  tiles: pbrMat(tiles([4, 3]), { bumpScale: .5 }),
+  metal: pbrMat(brushedMetal(66), { metalness: .85, roughness: .45, bumpScale: .05 }),
+  blackMetal: std({ color: '#1d2129', metalness: .6, roughness: .5 }),
+  plastic: std({ color: '#22262e', roughness: .55 }),
+  white: std({ color: '#eceae4', roughness: .6 }),
+  stone: pbrMat(concrete(90, [2, 1]), { bumpScale: .15, roughness: .35 }),
+  glass: new THREE.MeshPhysicalMaterial({ color: '#cfe6ff', roughness: .05, metalness: 0, transparent: true, opacity: .16, depthWrite: false, side: THREE.DoubleSide }),
+  potWhite: std({ color: '#efece6', roughness: .7 }),
+  potClay: std({ color: '#b86b46', roughness: .85 }),
+  soil: std({ color: '#3a2a1e', roughness: 1 }),
+  leaf: [std({ color: '#3f7f3a', roughness: .65, side: THREE.DoubleSide }), std({ color: '#2f6b33', roughness: .65, side: THREE.DoubleSide }), std({ color: '#5b9447', roughness: .65, side: THREE.DoubleSide })],
+  cushionOrange: pbrMat(fabric(22, 62, 50)), cushionGrey: pbrMat(fabric(210, 8, 46)), cushionCream: pbrMat(fabric(40, 25, 82)),
+  chairBlue: pbrMat(fabric(212, 30, 30)), chairOrange: pbrMat(fabric(18, 55, 46)), chairGreen: pbrMat(fabric(110, 22, 36)),
+  felt: pbrMat(fabric(205, 12, 38)), podShell: pbrMat(woodPlanks(18, 50, 42, 8, [2, 1])),
+  skin: [std({ color: '#e8b996', roughness: .7 }), std({ color: '#c68c62', roughness: .7 }), std({ color: '#9b6643', roughness: .7 })],
+  shoe: std({ color: '#1b1b1f', roughness: .6 }),
+};
+
+/* ============================== SCREEN TEXTURES ============================== */
+function screenTex(kind, accent = '#c8f04a') {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 300; const g = c.getContext('2d');
+  g.fillStyle = kind === 'term' ? '#0b1210' : '#101826'; g.fillRect(0, 0, 512, 300);
+  g.fillStyle = '#1c2a40'; g.fillRect(0, 0, 512, 22); ['#ff5f57', '#febc2e', '#28c840'].forEach((cl, i) => { g.fillStyle = cl; g.beginPath(); g.arc(14 + i * 14, 11, 4, 0, 7); g.fill(); });
+  if (kind === 'sheet') {
+    g.fillStyle = '#f4f6f9'; g.fillRect(10, 30, 492, 260); g.strokeStyle = '#cfd6e0';
+    for (let y = 30; y <= 290; y += 20) { g.beginPath(); g.moveTo(10, y); g.lineTo(502, y); g.stroke(); }
+    [10, 60, 250, 330, 410, 502].forEach(x => { g.beginPath(); g.moveTo(x, 30); g.lineTo(x, 290); g.stroke(); });
+    g.fillStyle = '#1f6f43'; g.fillRect(10, 30, 492, 20);
+    g.fillStyle = '#5b6b80'; for (let y = 56; y < 280; y += 20) { g.fillRect(66, y, R(80, 170), 6); g.fillRect(256, y, R(30, 60), 6); g.fillRect(336, y, R(40, 60), 6); g.fillRect(416, y, R(50, 80), 6); }
+    g.fillStyle = accent; g.fillRect(410, 270, 92, 20);
+  } else if (kind === 'code' || kind === 'term') {
+    const cols = kind === 'term' ? ['#3ddc84', '#9be8b8', '#e0e0e0'] : ['#7aa2f7', '#bb9af7', '#9ece6a', '#e0af68', '#c0caf5'];
+    let y = 36; while (y < 290) { let x = 14 + (rnd() < .5 ? 0 : 18 * ((rnd() * 3) | 0)); const n = 1 + (rnd() * 4 | 0);
+      for (let i = 0; i < n; i++) { const w = R(20, 90); g.fillStyle = cols[(rnd() * cols.length) | 0]; g.fillRect(x, y, w, 6); x += w + 8; } y += 13; }
+  } else if (kind === 'arch' || kind === 'archLight') {
+    const light = kind === 'archLight'; if (light) { g.fillStyle = '#f7f7f2'; g.fillRect(0, 0, 512, 300); }
+    const ink = light ? '#1f3a5f' : '#7dd3fc', box = (x, y, w, h, t, c) => { g.strokeStyle = c || ink; g.lineWidth = 3; g.strokeRect(x, y, w, h);
+      g.fillStyle = c || ink; g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; g.fillText(t, x + w / 2, y + h / 2 + 5); };
+    const arrow = (x1, y1, x2, y2) => { g.strokeStyle = light ? '#555' : '#94a3b8'; g.lineWidth = 2; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+      const a = Math.atan2(y2 - y1, x2 - x1); g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - 9 * Math.cos(a - .4), y2 - 9 * Math.sin(a - .4)); g.lineTo(x2 - 9 * Math.cos(a + .4), y2 - 9 * Math.sin(a + .4)); g.fill(); };
+    box(20, 60, 100, 46, 'GPS Tracker'); box(20, 170, 100, 46, 'Sensor BLE'); box(200, 112, 110, 50, 'MQTT Broker', light ? '#c2410c' : '#fbbf24');
+    box(380, 50, 110, 46, 'Database'); box(380, 130, 110, 46, 'Dashboard'); box(380, 210, 110, 46, 'Notifikasi');
+    arrow(120, 83, 198, 130); arrow(120, 193, 198, 148); arrow(310, 130, 378, 73); arrow(310, 137, 378, 153); arrow(310, 145, 378, 230);
+    g.textAlign = 'left'; g.fillStyle = light ? '#666' : '#94a3b8'; g.font = '12px sans-serif'; g.fillText('Opty: Fleet tracking 50 truk – BoM v1', 20, 285);
+  } else if (kind === 'pipeline') {
+    ['Lead', 'Kualifikasi', 'Proposal', 'Nego'].forEach((t, i) => { const x = 12 + i * 125; g.fillStyle = '#1b2a42'; g.fillRect(x, 32, 115, 258);
+      g.fillStyle = '#93a3ba'; g.font = 'bold 13px sans-serif'; g.fillText(t, x + 8, 50);
+      for (let k = 0; k < 3 - (i > 2 ? 1 : 0); k++) { const stale = (i === 1 && k === 1) || (i === 2 && k === 0); g.fillStyle = stale ? '#ff5d5d' : '#f472b6';
+        g.globalAlpha = stale ? 1 : .75; g.fillRect(x + 8, 62 + k * 46, 99, 38); g.globalAlpha = 1; } });
+  } else if (kind === 'kanban') {
+    ['To do', 'Dikerjakan', 'Review', 'Selesai'].forEach((t, i) => { const x = 12 + i * 125; g.fillStyle = '#1b2a42'; g.fillRect(x, 32, 115, 258);
+      g.fillStyle = '#93a3ba'; g.font = 'bold 13px sans-serif'; g.fillText(t, x + 8, 50);
+      for (let k = 0; k < 2 + (rnd() * 3 | 0); k++) { g.fillStyle = ['#c8f04a', '#ffc93c', '#7aa2f7', '#ff8a5c'][(i + k) % 4]; g.fillRect(x + 8, 62 + k * 46, 99, 38); } });
+  } else if (kind === 'chart') {
+    g.strokeStyle = '#2a3a55'; for (let y = 50; y < 290; y += 40) { g.beginPath(); g.moveTo(20, y); g.lineTo(500, y); g.stroke(); }
+    for (let i = 0; i < 12; i++) { const hgt = R(40, 210); g.fillStyle = i === 11 ? accent : '#4a7bd8'; g.fillRect(30 + i * 39, 285 - hgt, 26, hgt); }
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+/* ============================== MURALS ============================== */
+function muralTex(w, h, words) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  g.fillStyle = '#1b2230'; g.fillRect(0, 0, w, h);
+  // brushed paint texture
+  for (let i = 0; i < 3000; i++) { g.fillStyle = `rgba(255,255,255,${R(0, .025)})`; g.fillRect(rnd() * w, rnd() * h, R(1, 12), 1); }
+  // swooshes
+  const sw = [['#ff7a45', 26], ['#2ec4b6', 18], ['#f5e6c8', 10]];
+  sw.forEach(([cl, lw], k) => { g.strokeStyle = cl; g.lineWidth = lw; g.lineCap = 'round'; g.beginPath(); g.moveTo(-20, h * (.75 - k * .08));
+    for (let x = 0; x <= w + 40; x += 160) g.quadraticCurveTo(x + 80, h * (.45 + .3 * Math.sin(x / 300 + k)), x + 160, h * (.7 - k * .08 + .1 * Math.cos(x / 250))); g.stroke(); });
+  // checker flags
+  const flag = (x, y, s) => { for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) { g.fillStyle = (i + j) % 2 ? '#111' : '#f4f4f4'; g.fillRect(x + i * s, y + j * s, s, s); } };
+  for (let i = 0; i < 5; i++) flag(R(0, w - 80), R(10, h * .3), 14);
+  // words
+  words.forEach(([txt, x, fs, fill, stroke, rot]) => { g.save(); g.translate(x * w, h * .6); g.rotate(rot); g.font = `italic 800 ${fs}px "Plus Jakarta Sans", Impact, sans-serif`;
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = fs * .14; g.strokeStyle = '#0d1118'; g.strokeText(txt, 0, 0);
+    g.lineWidth = fs * .07; g.strokeStyle = stroke; g.strokeText(txt, 0, 0); g.fillStyle = fill; g.fillText(txt, 0, 0); g.restore(); });
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+
+/* ============================== BUILDERS ============================== */
+function plant(x, z, size = 1, parent = scene, white = true) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); parent.add(g);
+  const potH = .42 * size;
+  mesh(new THREE.CylinderGeometry(.2 * size, .15 * size, potH, 24), white ? M.potWhite : M.potClay, 0, potH / 2, 0, g);
+  mesh(new THREE.CylinderGeometry(.205 * size, .205 * size, .03, 24), white ? M.potWhite : M.potClay, 0, potH, 0, g);
+  mesh(new THREE.CylinderGeometry(.18 * size, .18 * size, .02, 20), M.soil, 0, potH - .02, 0, g, false);
+  const leafGeo = new THREE.SphereGeometry(1, 10, 8); leafGeo.scale(.07, .02, .2); leafGeo.translate(0, 0, .2);
+  const stems = 14 + (size * 6 | 0);
+  for (let i = 0; i < stems; i++) {
+    const a = rnd() * Math.PI * 2, up = R(.3, 1.1) * size, tilt = R(.3, 1.0);
+    const stem = new THREE.Group(); stem.position.set(0, potH + up * .5, 0); stem.rotation.set(0, a, 0); g.add(stem);
+    mesh(new THREE.CylinderGeometry(.008, .01, up, 5), M.leaf[1], 0, -up * .25, 0, stem, false);
+    const lf = mesh(leafGeo, M.leaf[i % 3], 0, up * .25, 0, stem); lf.rotation.x = -tilt; lf.scale.setScalar(R(.8, 1.3) * size);
+  }
+  return g;
+}
+function chair(mat, parent) {
+  const g = new THREE.Group(); parent.add(g);
+  for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; const leg = mesh(new THREE.BoxGeometry(.04, .03, .3), M.blackMetal, Math.sin(a) * .15, .07, Math.cos(a) * .15, g); leg.rotation.y = a;
+    mesh(new THREE.SphereGeometry(.03, 10, 8), M.plastic, Math.sin(a) * .29, .03, Math.cos(a) * .29, g); }
+  mesh(new THREE.CylinderGeometry(.025, .03, .32, 12), M.metal, 0, .25, 0, g);
+  mesh(rbox(.5, .08, .48, .035), mat, 0, .46, 0, g);
+  mesh(rbox(.48, .52, .07, .03), mat, 0, .8, .22, g).rotation.x = -.12;
+  mesh(new THREE.BoxGeometry(.03, .3, .03), M.blackMetal, 0, .62, .25, g).rotation.x = -.1;
+  [-1, 1].forEach(s => { mesh(new THREE.BoxGeometry(.03, .2, .03), M.blackMetal, s * .25, .56, 0, g); mesh(rbox(.06, .03, .26, .012), M.plastic, s * .25, .67, .02, g); });
+  return g;
+}
+function monitor(parent, x, z, rotY, tex) {
+  const g = new THREE.Group(); g.position.set(x, .775, z); g.rotation.y = rotY; parent.add(g);
+  mesh(rbox(.24, .015, .17, .006), M.blackMetal, 0, .008, 0, g);
+  mesh(new THREE.BoxGeometry(.04, .26, .025), M.metal, 0, .14, -.04, g);
+  mesh(rbox(.64, .39, .03, .01), M.plastic, 0, .33, -.02, g);
+  const scr = std({ color: '#000', emissive: '#ffffff', emissiveMap: tex, emissiveIntensity: .9, roughness: .3, map: tex });
+  mesh(new THREE.PlaneGeometry(.6, .35), scr, 0, .33, -.004, g, false, false); screens.push(scr);
+  return g;
+}
+function desk(x, z, rot, screen, opts = {}) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g);
+  const W = opts.w || 1.6;
+  mesh(rbox(W, .05, .8, .02), opts.top || M.deskTop, 0, .75, 0, g);
+  [-1, 1].forEach(s => { mesh(new THREE.BoxGeometry(.05, .72, .05), M.blackMetal, s * (W / 2 - .1), .36, 0, g);
+    mesh(new THREE.BoxGeometry(.06, .03, .7), M.blackMetal, s * (W / 2 - .1), .015, 0, g); });
+  mesh(new THREE.BoxGeometry(W - .3, .04, .03), M.blackMetal, 0, .68, -.3, g);
+  mesh(rbox(W - .2, .36, .025, .01), M.felt, 0, .52, -.37, g);
+  if (opts.dual) { monitor(g, -.33, -.18, .22, screen); monitor(g, .33, -.18, -.22, opts.screen2 || screen); }
+  else monitor(g, 0, -.2, 0, screen);
+  mesh(rbox(.44, .02, .14, .008), M.plastic, 0, .785, .13, g);
+  for (let i = 0; i < 4; i++) mesh(new THREE.BoxGeometry(.4, .006, .02), M.blackMetal, 0, .797, .085 + i * .03, g, false);
+  const mouse = mesh(new THREE.SphereGeometry(.035, 12, 8), M.plastic, .32, .785, .14, g); mouse.scale.set(.8, .45, 1.2);
+  const mug = mesh(new THREE.CylinderGeometry(.035, .032, .09, 16), opts.mug || M.white, -.55, .82, .05, g);
+  mesh(new THREE.TorusGeometry(.022, .007, 6, 12), opts.mug || M.white, -.51, .82, .05, g).rotation.y = Math.PI / 2;
+  if (opts.papers !== false) { const p = mesh(new THREE.BoxGeometry(.21, .006, .29), M.white, .55, .78, .02, g); p.rotation.y = .3;
+    const p2 = mesh(new THREE.BoxGeometry(.21, .006, .29), std({ color: '#f6f0dc', roughness: .9 }), .57, .786, .04, g); p2.rotation.y = .1; }
+  if (opts.plant) { mesh(new THREE.CylinderGeometry(.06, .05, .1, 14), M.potClay, -.62, .82, -.25, g);
+    for (let i = 0; i < 7; i++) { const l = mesh(new THREE.SphereGeometry(.05, 8, 6), M.leaf[i % 3], -.62 + R(-.04, .04), .9 + R(0, .06), -.25 + R(-.04, .04), g); l.scale.set(.6, .35, 1.2); l.rotation.y = R(0, 6); } }
+  const ch = chair(opts.chair || M.chairBlue, g); ch.position.set(0, 0, .62);
+  return g;
+}
+function sofa(x, z, rot, mat, seats = 3, parent = scene) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot; parent.add(g);
+  const W = seats * .7 + .3;
+  mesh(rbox(W, .28, .9, .05), mat, 0, .24, 0, g);
+  mesh(rbox(W, .55, .2, .06), mat, 0, .55, -.35, g);
+  [-1, 1].forEach(s => mesh(rbox(.18, .5, .9, .06), mat, s * (W / 2 - .09), .4, 0, g));
+  for (let i = 0; i < seats; i++) { const cx = -((seats - 1) * .7) / 2 + i * .7;
+    mesh(rbox(.68, .14, .68, .06, 4), mat, cx, .44, .06, g); mesh(rbox(.66, .42, .14, .06, 4), mat, cx, .68, -.22, g).rotation.x = -.15; }
+  [-1, 1].forEach(s => [-1, 1].forEach(t => mesh(new THREE.CylinderGeometry(.025, .02, .1, 8), M.walnut, s * (W / 2 - .08), .05, t * .35, g)));
+  return g;
+}
+function pendant(x, y, z, parent = scene, color = '#ffd8a0', light = true) {
+  mesh(new THREE.CylinderGeometry(.004, .004, 3.2 - y, 4), M.blackMetal, x, y + (3.2 - y) / 2, z, parent, false);
+  mesh(new THREE.ConeGeometry(.22, .22, 24, 1, true), std({ color: '#20242c', roughness: .4, metalness: .5, side: THREE.DoubleSide }), x, y, z, parent);
+  const bulbMat = std({ color: '#fff', emissive: color, emissiveIntensity: .6 }); lamps.push(bulbMat);
+  mesh(new THREE.SphereGeometry(.07, 12, 10), bulbMat, x, y - .1, z, parent, false);
+  if (!light) return; const pl = new THREE.PointLight(color, 0, 6, 2); pl.position.set(x, y - .25, z); parent.add(pl); lamps.push(pl);
+}
+function bookshelf(x, z, rot) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g);
+  const W = 2, H = 2.1, D = .35;
+  [-1, 1].forEach(s => mesh(new THREE.BoxGeometry(.04, H, D), M.walnut, s * W / 2, H / 2, 0, g));
+  for (let i = 0; i <= 5; i++) mesh(new THREE.BoxGeometry(W, .03, D), M.walnut, 0, .05 + i * .4, 0, g);
+  mesh(new THREE.BoxGeometry(W, H, .02), M.walnut, 0, H / 2, -D / 2, g);
+  const cols = ['#c0392b', '#2e86de', '#f6b93b', '#38ada9', '#e8e3d6', '#6a4c93', '#1e3799', '#e55039'];
+  for (let i = 0; i < 5; i++) { let bx = -W / 2 + .05; while (bx < W / 2 - .12) { const bw = R(.03, .07), bh = R(.22, .34);
+      if (rnd() < .1) { bx += .12; continue; }
+      const b = mesh(new THREE.BoxGeometry(bw, bh, R(.2, .26)), std({ color: cols[(rnd() * cols.length) | 0], roughness: .8 }), bx + bw / 2, .065 + i * .4 + bh / 2, 0, g); b.rotation.z = rnd() < .08 ? .2 : 0; bx += bw + .004; } }
+}
+
+/* ============================== BUILDING ============================== */
+const FW = 26, FD = 18, WALL_H = 3.2;
+// upper slab
+mesh(new THREE.BoxGeometry(FW, .4, FD), M.slabEdge, 0, -.2, 0);
+mesh(new THREE.PlaneGeometry(FW - .02, FD - .02), M.floor, 0, .001, 0).rotation.x = -Math.PI / 2;
+// zone floors (thin inlays)
+function zone(x0, z0, x1, z1, mat, y = .012) { const m = mesh(new THREE.BoxGeometry(x1 - x0, .02, z1 - z0), mat, (x0 + x1) / 2, y, (z0 + z1) / 2, scene, false); return m; }
+zone(-12.6, -8.6, -4.2, -1.6, M.deck, .03);           // lounge deck
+zone(-12.6, 1.4, -2.6, 8.2, M.oak);                  // finance
+zone(1.2, 2.2, 11.8, 8.2, M.carpetEng);              // engineering
+zone(4.6, -8.6, 12.6, -3.4, M.carpetMeet);           // meeting
+zone(-2.8, -8.2, 3.4, -4.0, M.rubber);               // games
+zone(8.4, -2.6, 12.6, 1.4, M.tiles);                 // pantry
+
+// walls with murals
+const backWall = new THREE.Group(); scene.add(backWall);
+const mBack = std({ map: muralTex(4096, 512, [['BUILD', .16, 300, '#f4e7cf', '#ff7a45', -.05], ['IPUL HQ', .5, 340, '#ff7a45', '#f4e7cf', -.04], ['SHIP IT', .83, 300, '#f4e7cf', '#2ec4b6', -.05]]), roughness: .85 });
+mesh(new THREE.BoxGeometry(FW, WALL_H, .2), [M.white, M.white, M.white, M.white, mBack, M.white], 0, WALL_H / 2, -FD / 2 + .1, backWall);
+const mLeft = std({ map: muralTex(3072, 512, [['THINK', .2, 280, '#2ec4b6', '#f4e7cf', -.05], ['BIG', .5, 340, '#f4e7cf', '#ff7a45', -.06], ['ACT FAST', .82, 250, '#ff7a45', '#f4e7cf', -.04]]), roughness: .85 });
+mesh(new THREE.BoxGeometry(.2, WALL_H, FD), [mLeft, M.white, M.white, M.white, M.white, M.white], -FW / 2 + .1, WALL_H / 2, 0);
+// wall top cap
+mesh(new THREE.BoxGeometry(FW, .06, .26), M.blackMetal, 0, WALL_H, -FD / 2 + .1); mesh(new THREE.BoxGeometry(.26, .06, FD), M.blackMetal, -FW / 2 + .1, WALL_H, 0);
+// columns
+[[-FW / 2 + .25, FD / 2 - .25], [FW / 2 - .25, FD / 2 - .25], [FW / 2 - .25, -FD / 2 + .25], [0, -FD / 2 + .3]].forEach(([x, z]) => mesh(new THREE.BoxGeometry(.4, WALL_H, .4), M.white, x, WALL_H / 2, z));
+// glass railing on open sides
+function rail(x0, z0, x1, z1) {
+  const len = Math.hypot(x1 - x0, z1 - z0), ang = Math.atan2(z1 - z0, x1 - x0), g = new THREE.Group(); g.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2); g.rotation.y = -ang; scene.add(g);
+  mesh(new THREE.BoxGeometry(len, 1, .02), M.glass, 0, .55, 0, g, false, false);
+  mesh(new THREE.BoxGeometry(len, .04, .07), M.metal, 0, 1.06, 0, g);
+  for (let i = 0; i <= Math.floor(len / 2); i++) mesh(new THREE.BoxGeometry(.04, 1.05, .05), M.metal, -len / 2 + i * (len / Math.floor(len / 2)), .53, 0, g);
+}
+rail(-FW / 2 + .5, FD / 2 - .08, FW / 2 - .5, FD / 2 - .08); rail(FW / 2 - .08, FD / 2 - .5, FW / 2 - .08, -FD / 2 + .5);
+
+// lower floor (lobby) — cutaway look
+const lower = new THREE.Group(); lower.position.set(0, -3.6, 4); scene.add(lower);
+mesh(new THREE.BoxGeometry(FW - 2, .4, 16), M.slabEdge, 0, -.2, 0, lower);
+mesh(new THREE.PlaneGeometry(FW - 2.02, 15.98), M.floor, 0, .002, 0, lower).rotation.x = -Math.PI / 2;
+[[-FW / 2 + 1.25, 7.7], [FW / 2 - 1.25, 7.7], [-4, 7.7], [6, 7.7]].forEach(([x, z]) => mesh(new THREE.BoxGeometry(.35, 3.2, .35), M.white, x, 1.6, z, lower));
+mesh(new THREE.BoxGeometry(FW - 2.6, 3.1, .03), M.glass, 0, 1.6, 7.8, lower, false, false);
+sofa(-6, 5.6, Math.PI, M.cushionGrey, 3, lower); sofa(-8.9, 6.4, Math.PI / 2, M.cushionGrey, 2, lower);
+mesh(new THREE.CylinderGeometry(.5, .5, .06, 32), M.walnut, -6, .4, 6.6, lower); mesh(new THREE.CylinderGeometry(.06, .2, .38, 16), M.blackMetal, -6, .19, 6.6, lower);
+const lob = new THREE.Group(); lob.position.set(3.5, 0, 6.2); lob.rotation.y = 0; lower.add(lob);
+mesh(rbox(2.6, 1.05, .7, .05), M.walnut, 0, .525, 0, lob); mesh(rbox(2.7, .05, .8, .02), M.stone, 0, 1.07, 0, lob);
+const signC = document.createElement('canvas'); signC.width = 512; signC.height = 96; const sg = signC.getContext('2d'); sg.fillStyle = '#c8f04a'; sg.font = '800 64px "Plus Jakarta Sans", sans-serif'; sg.textAlign = 'center'; sg.textBaseline = 'middle'; sg.fillText('LOBBY · IPUL HQ', 256, 50);
+const signT = new THREE.CanvasTexture(signC); signT.colorSpace = THREE.SRGBColorSpace; const signM = std({ color: '#000', emissive: '#fff', emissiveMap: signT, transparent: true, alphaMap: signT, emissiveIntensity: .8 }); lamps.push(signM);
+mesh(new THREE.PlaneGeometry(2.2, .42), signM, 0, .55, .356, lob, false, false);
+plant(-10.8, 7.0, 1.4, lower); plant(9.8, 6.6, 1.3, lower, false); plant(1.2, 7.0, 1, lower);
+pendant(-6, 2.2, 6.6, lower);
+
+/* ============================== ZONES / FURNITURE ============================== */
+// Lounge (back-left)
+sofa(-8.4, -7.6, 0, M.cushionOrange, 3);
+const arm = (x, z, r) => sofa(x, z, r, M.cushionCream, 1);
+arm(-10.9, -5.2, Math.PI / 2); arm(-5.9, -5.2, -Math.PI / 2); arm(-8.4, -3.0, Math.PI);
+// fire table
+mesh(new THREE.CylinderGeometry(.75, .75, .1, 40), M.stone, -8.4, .38, -5.2); mesh(new THREE.CylinderGeometry(.62, .7, .34, 40), M.blackMetal, -8.4, .17, -5.2);
+const fireMat = std({ color: '#ff9a3c', emissive: '#ff7a1a', emissiveIntensity: 1.6, transparent: true, opacity: .9 }); lamps.push(fireMat);
+const fires = []; for (let i = 0; i < 6; i++) { const f = mesh(new THREE.ConeGeometry(.07, .3, 8), fireMat, -8.4 + Math.cos(i) * .18, .55, -5.2 + Math.sin(i) * .18, scene, false, false); f.userData.dynamic = true; fires.push(f); }
+const fireLight = new THREE.PointLight('#ff8a3a', .8, 5, 2); fireLight.position.set(-8.4, .9, -5.2); scene.add(fireLight);
+// rug under lounge
+const rug = mesh(new THREE.CylinderGeometry(2.3, 2.3, .015, 48), pbrMat(fabric(30, 20, 72, [6, 6])), -8.4, .045, -5.2, scene, false); rug.receiveShadow = true;
+plant(-12.1, -8.1, 1.5); plant(-4.8, -8.1, 1.2, scene, false); plant(-12.1, -2.2, 1.1);
+pendant(-8.4, 2.3, -5.2); pendant(-9.9, 2.4, -6.8, scene, '#ffd8a0', false); pendant(-6.9, 2.4, -6.8, scene, '#ffd8a0', false);
+
+// Games: ping pong
+const pp = new THREE.Group(); pp.position.set(.3, 0, -6.1); scene.add(pp);
+const ppTopC = document.createElement('canvas'); ppTopC.width = 512; ppTopC.height = 288; const pg = ppTopC.getContext('2d');
+pg.fillStyle = '#1f4e79'; pg.fillRect(0, 0, 512, 288); pg.strokeStyle = '#fff'; pg.lineWidth = 8; pg.strokeRect(4, 4, 504, 280); pg.lineWidth = 3; pg.beginPath(); pg.moveTo(0, 144); pg.lineTo(512, 144); pg.stroke();
+const ppT = new THREE.CanvasTexture(ppTopC); ppT.colorSpace = THREE.SRGBColorSpace;
+mesh(new THREE.BoxGeometry(2.74, .04, 1.52), [M.blackMetal, M.blackMetal, std({ map: ppT, roughness: .5 }), M.blackMetal, M.blackMetal, M.blackMetal], 0, .76, 0, pp);
+[-1, 1].forEach(s => [-1, 1].forEach(t => mesh(new THREE.BoxGeometry(.05, .74, .05), M.blackMetal, s * 1.15, .37, t * .6, pp)));
+mesh(new THREE.PlaneGeometry(.02, .15), M.white, 0, .855, 0, pp).rotation.y = Math.PI / 2;
+const net = mesh(new THREE.PlaneGeometry(1.6, .15), std({ color: '#ddd', transparent: true, opacity: .6, side: THREE.DoubleSide }), 0, .855, 0, pp, false); net.rotation.y = Math.PI / 2;
+mesh(new THREE.SphereGeometry(.02, 10, 8), std({ color: '#ff8a1e' }), .6, .8, .2, pp);
+[[-.9, .3], [.9, -.3]].forEach(([x, z]) => { const pd = new THREE.Group(); pd.position.set(x, .785, z); pd.rotation.z = Math.PI / 2; pd.rotation.x = Math.PI / 2; pp.add(pd);
+  mesh(new THREE.CylinderGeometry(.08, .08, .015, 20), std({ color: '#c0392b', roughness: .7 }), 0, 0, 0, pd); mesh(new THREE.BoxGeometry(.03, .015, .1), M.walnut, 0, 0, .12, pd); });
+// bean bags
+[[-1.8, -4.6, '#2ec4b6'], [2.6, -4.6, '#ff7a45']].forEach(([x, z, c]) => { const b = mesh(new THREE.SphereGeometry(.45, 24, 16), pbrMat(fabric(c === '#2ec4b6' ? 175 : 18, 55, 48)), x, .3, z); b.scale.set(1, .65, 1); });
+
+// Meeting room (back-right) glass box
+const meet = new THREE.Group(); scene.add(meet);
+mesh(new THREE.BoxGeometry(.04, 2.6, 5.0), M.glass, 4.7, 1.3, -6.0, meet, false, false);
+mesh(new THREE.BoxGeometry(7.8, 2.6, .04), M.glass, 8.6, 1.3, -3.5, meet, false, false);
+[[4.7, -3.5], [4.7, -8.5], [12.5, -3.5], [7.5, -3.5]].forEach(([x, z]) => mesh(new THREE.BoxGeometry(.06, 2.6, .06), M.blackMetal, x, 1.3, z, meet));
+mesh(new THREE.BoxGeometry(7.8, .06, .06), M.blackMetal, 8.6, 2.6, -3.5, meet); mesh(new THREE.BoxGeometry(.06, .06, 5.0), M.blackMetal, 4.7, 2.6, -6.0, meet);
+mesh(rbox(3.6, .06, 1.3, .03), M.walnut, 8.7, .75, -6.1, meet);
+[-1.2, 1.2].forEach(s => mesh(new THREE.BoxGeometry(.08, .72, 1.0), M.blackMetal, 8.7 + s, .36, -6.1, meet));
+for (let i = 0; i < 3; i++) [-1, 1].forEach(s => { const c = chair(M.chairGreen, meet); c.position.set(7.6 + i * 1.1, 0, -6.1 + s * .95); c.rotation.y = s > 0 ? 0 : Math.PI; });
+const tvMat = std({ color: '#000', emissive: '#fff', emissiveMap: screenTex('kanban'), emissiveIntensity: .9 }); screens.push(tvMat);
+mesh(rbox(2.4, 1.4, .06, .02), M.plastic, 8.7, 1.75, -8.86, meet); mesh(new THREE.PlaneGeometry(2.3, 1.3), tvMat, 8.7, 1.75, -8.825, meet, false, false);
+plant(12.1, -8.1, 1.3, meet); pendant(8.7, 2.25, -6.1, meet, '#fff1d6');
+
+// Pantry (right)
+const pan = new THREE.Group(); scene.add(pan);
+mesh(rbox(.7, .9, 3.6, .02), M.walnut, 12.2, .45, -.6, pan); mesh(rbox(.75, .05, 3.7, .01), M.stone, 12.2, .925, -.6, pan);
+for (let i = 0; i < 5; i++) mesh(new THREE.BoxGeometry(.01, .7, .66), M.blackMetal, 11.845, .45, -2.2 + i * .8, pan);
+mesh(rbox(.75, 2.0, .75, .03), M.metal, 12.2, 1.0, 1.55, pan); // fridge
+mesh(new THREE.BoxGeometry(.02, .6, .03), M.blackMetal, 11.83, 1.3, 1.3, pan);
+const cm = new THREE.Group(); cm.position.set(12.25, .95, -1.6); pan.add(cm); // coffee machine
+mesh(rbox(.32, .4, .36, .03), M.blackMetal, 0, .2, 0, cm); mesh(rbox(.3, .06, .3, .02), M.metal, -.02, .43, 0, cm);
+const cmLed = std({ color: '#000', emissive: '#3ddc84', emissiveIntensity: 1 }); mesh(new THREE.BoxGeometry(.01, .03, .06), cmLed, -.165, .3, 0, cm, false);
+for (let i = 0; i < 3; i++) mesh(new THREE.BoxGeometry(.45, .03, 2.6), M.walnut, 12.4, 1.55 + i * .42, -.6, pan);
+for (let i = 0; i < 14; i++) mesh(new THREE.CylinderGeometry(.05, .05, R(.12, .2), 12), std({ color: ['#e8e3d6', '#c8f04a', '#2ec4b6', '#ff7a45'][i % 4], roughness: .4 }), 12.4, 1.65 + ((i / 5) | 0) * .42, -1.7 + (i % 5) * .5, pan);
+// island + stools
+mesh(rbox(2.4, .95, .8, .03), M.white, 9.7, .475, -.6, pan); mesh(rbox(2.6, .05, 1.0, .02), M.walnut, 9.7, .97, -.6, pan);
+for (let i = 0; i < 3; i++) { const sx = 8.9 + i * .8; mesh(new THREE.CylinderGeometry(.18, .18, .06, 20), M.chairOrange, sx, .72, .2, pan);
+  mesh(new THREE.CylinderGeometry(.02, .02, .7, 8), M.blackMetal, sx, .36, .2, pan); mesh(new THREE.TorusGeometry(.14, .012, 6, 20), M.blackMetal, sx, .3, .2, pan).rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(.16, .18, .02, 20), M.blackMetal, sx, .01, .2, pan); }
+pendant(9.1, 2.2, -.6, pan); pendant(10.3, 2.2, -.6, pan, '#ffd8a0', false);
+
+// Phone pods row (center-left, like reference)
+for (let i = 0; i < 3; i++) { const pod = new THREE.Group(); pod.position.set(-3.6 + i * 1.25, 0, -1.6); scene.add(pod);
+  const shell = new THREE.CylinderGeometry(.6, .6, 1.2, 32, 1, true, 0, Math.PI); shell.rotateZ(Math.PI / 2); shell.rotateY(Math.PI / 2);
+  const shellM = M.podShell.clone(); shellM.side = THREE.DoubleSide; mesh(shell, shellM, 0, 1.6, 0, pod);
+  [-1, 1].forEach(s => mesh(new THREE.BoxGeometry(1.16, 1.6, .05), M.podShell, 0, .8, s * .58, pod));
+  mesh(new THREE.BoxGeometry(.05, 1.6, 1.2), M.podShell, -.57, .8, 0, pod);
+  mesh(rbox(.9, .3, .9, .04), M.cushionGrey, -.05, .2, 0, pod); mesh(rbox(.12, .5, .8, .04), M.cushionGrey, -.48, .6, 0, pod);
+  const lm = std({ color: '#fff', emissive: '#ffdcae', emissiveIntensity: .7 }); lamps.push(lm); mesh(new THREE.BoxGeometry(.6, .02, .6), lm, 0, 2.15, 0, pod, false); pod.rotation.y = -Math.PI / 2; }
+
+// Bookshelves + plants on finance side
+bookshelf(-12.65, 3.0, Math.PI / 2); bookshelf(-12.65, 5.2, Math.PI / 2);
+plant(-12.1, 7.7, 1.3); plant(-3.1, 7.7, 1.1, scene, false); plant(1.6, 7.7, 1.2); plant(11.8, 7.7, 1.4, scene, false); plant(-1.6, 4.4, .9); plant(12.2, 3.0, 1.1);
+
+// Server rack (DevOps)
+const rack = new THREE.Group(); rack.position.set(11.6, 0, 5.4); scene.add(rack);
+mesh(rbox(.7, 2.0, .9, .02), M.blackMetal, 0, 1.0, 0, rack);
+const ledC = document.createElement('canvas'); ledC.width = 64; ledC.height = 256; const lg = ledC.getContext('2d'); lg.fillStyle = '#0a0d12'; lg.fillRect(0, 0, 64, 256);
+for (let y = 6; y < 250; y += 12) { lg.fillStyle = '#20262f'; lg.fillRect(4, y, 56, 9); for (let k = 0; k < 4; k++) { lg.fillStyle = rnd() < .7 ? '#3ddc84' : (rnd() < .5 ? '#ffc93c' : '#4aa3ff'); lg.fillRect(8 + k * 6, y + 3, 3, 3); } }
+const ledT = new THREE.CanvasTexture(ledC); ledT.colorSpace = THREE.SRGBColorSpace;
+const rackFace = std({ color: '#111', emissive: '#fff', emissiveMap: ledT, map: ledT, emissiveIntensity: .9 }); screens.push(rackFace);
+mesh(new THREE.PlaneGeometry(.62, 1.9), rackFace, -.356, 1.0, 0, rack, false).rotation.y = -Math.PI / 2;
+
+// Whiteboard for the Solution Architect corner
+const wb = new THREE.Group(); wb.position.set(-4.3, 0, 7.15); wb.rotation.y = -.55; scene.add(wb);
+[-1, 1].forEach(sx => { mesh(new THREE.BoxGeometry(.04, 1.75, .04), M.metal, sx * .82, .875, 0, wb); mesh(new THREE.BoxGeometry(.05, .03, .5), M.metal, sx * .82, .02, 0, wb); });
+mesh(rbox(1.7, 1.0, .04, .015), M.metal, 0, 1.3, 0, wb);
+mesh(new THREE.PlaneGeometry(1.62, .92), std({ map: screenTex('archLight'), roughness: .25 }), 0, 1.3, .021, wb, false);
+mesh(new THREE.BoxGeometry(1.4, .03, .07), M.metal, 0, .8, .05, wb);
+['#c0392b', '#1e3799', '#27ae60'].forEach((c, i) => { const mk = mesh(new THREE.CylinderGeometry(.012, .012, .13, 8), std({ color: c }), -.3 + i * .08, .825, .06, wb); mk.rotation.z = Math.PI / 2; });
+
+/* ============================== DESKS & AGENTS ============================== */
+const AISLE_Z = 2.6;
+const AGENTS = [
+  { id: 'pm', name: 'Sari', role: 'Sekretaris / PM', color: '#c8f04a', desk: [0.2, .55, Math.PI], screen: 'kanban', chair: M.chairOrange, shirt: '#2e5e4e', pants: '#2b2f3a', skin: 0, hair: '#2a1a12', long: true, acc: 'tie',
+    task: '', status: 'idle' },
+  { id: 'crm', name: 'Nadia', role: 'Admin Opty / CRM', color: '#f472b6', desk: [-10.2, 6.9, 0], screen: 'pipeline', chair: M.chairOrange, shirt: '#b83280', pants: '#2b2f3a', skin: 0, hair: '#3a2214', long: true,
+    task: '', status: 'idle' },
+  { id: 'sa', name: 'Fajar', role: 'Solution Architect', color: '#38bdf8', desk: [-7.2, 6.9, 0], screen: 'arch', dual: true, chair: M.chairOrange, shirt: '#334155', pants: '#1f2937', skin: 1, hair: '#120c08', acc: 'glasses',
+    task: '', status: 'idle' },
+  { id: 'rab', name: 'Budi', role: 'RAB / Estimator', color: '#ffc93c', desk: [-10.2, 4.3, 0], screen: 'sheet', chair: M.chairBlue, shirt: '#c97b2a', pants: '#3a3430', skin: 1, hair: '#1a1410', acc: 'glasses',
+    task: '', status: 'idle' },
+  { id: 'inv', name: 'Rina', role: 'Admin Invoice', color: '#7aa2f7', desk: [-7.2, 4.3, 0], screen: 'sheet', chair: M.chairBlue, shirt: '#6a4c93', pants: '#22252c', skin: 0, hair: '#4a2c1a', long: true,
+    task: '', status: 'idle' },
+  { id: 'fin', name: 'Dewi', role: 'Finance', color: '#3ddc84', desk: [-4.2, 4.3, 0], screen: 'chart', chair: M.chairBlue, shirt: '#1f6f8b', pants: '#2b2f3a', skin: 2, hair: '#120c08', long: true, acc: 'glasses',
+    task: '', status: 'idle' },
+  { id: 'prog', name: 'Raka', role: 'Programmer', color: '#bb9af7', desk: [2.6, 4.6, 0], screen: 'code', dual: true, chair: M.chairGreen, shirt: '#222831', pants: '#3b4252', skin: 1, hair: '#0e0b09', acc: 'headphones',
+    task: '', status: 'idle' },
+  { id: 'dev', name: 'Tono', role: 'Developer · Review & QA', color: '#ff8a5c', desk: [5.6, 4.6, 0], screen: 'code', dual: true, chair: M.chairGreen, shirt: '#8b2e2e', pants: '#2b2f3a', skin: 2, hair: '#1a1410', acc: 'glasses',
+    task: '', status: 'idle' },
+  { id: 'ops', name: 'Adit', role: 'DevOps', color: '#2ec4b6', desk: [8.6, 4.6, 0], screen: 'term', dual: true, chair: M.chairGreen, shirt: '#3d5a80', pants: '#22252c', skin: 0, hair: '#2a1a12', acc: 'cap',
+    task: '', status: 'idle' },
+];
+const STATUS = { working: ['Bekerja', '#3ddc84'], waiting: ['Menunggu persetujuan', '#ffc93c'], asking: ['Bertanya ke Ipul', '#a78bfa'], idle: ['Idle', '#8a96a8'], limit: ['Limit / istirahat', '#ff5d5d'] };
+
+// ---- "Otak" tiap agent: skill sesuai bidang + memory masing-masing (prototipe: data contoh) ----
+const BRAIN = {
+  pm:   { skills: ['delegasi-tugas', 'rekap-mingguan', 'jadwal-tenggat', 'ringkas-rapat'],
+          memory: [] },
+  crm:  { skills: ['catat-opty', 'update-opty', 'pengingat-opty', 'laporan-pipeline'],
+          memory: [] },
+  sa:   { skills: ['bedah-opty', 'desain-arsitektur-iot', 'susun-bom', 'analisis-risiko', 'solution-brief'],
+          memory: [] },
+  rab:  { skills: ['susun-rab', 'harga-satuan', 'margin-ppn', 'revisi-rab'],
+          memory: [] },
+  inv:  { skills: ['buat-invoice', 'penomoran-invoice', 'pengingat-jatuh-tempo'],
+          memory: [] },
+  fin:  { skills: ['catat-transaksi', 'rekap-kas', 'laba-rugi-sederhana', 'kategori-biaya'],
+          memory: [] },
+  prog: { skills: ['standar-kode', 'git-flow', 'tulis-tes'],
+          memory: [] },
+  dev:  { skills: ['code-review', 'uji-fungsional', 'cek-keamanan'],
+          memory: [] },
+  ops:  { skills: ['deploy', 'monitoring', 'backup-restore'],
+          memory: [] },
+};
+const QUESTIONS = [];
+QUESTIONS.forEach(q => { const a = AGENTS.find(x => x.id === q.agent); if (a) a.status = 'asking'; });
+
+// reception front panel for Sari
+const rec = new THREE.Group(); rec.position.set(.2, 0, 1.15); scene.add(rec);
+const recPanel = new THREE.CylinderGeometry(1.4, 1.4, 1.05, 48, 1, true, -Math.PI / 2.6, Math.PI / 1.3);
+const recM = M.walnut.clone(); recM.side = THREE.DoubleSide; mesh(recPanel, recM, 0, .525, -.95, rec);
+const recTop = new THREE.RingGeometry(1.25, 1.55, 48, 1, -Math.PI / 2.6 - Math.PI / 2, Math.PI / 1.3); recTop.rotateX(-Math.PI / 2);
+mesh(recTop, std({ color: '#f1efe9', roughness: .3, side: THREE.DoubleSide }), 0, 1.06, -.95, rec);
+const recStrip = std({ color: '#000', emissive: '#c8f04a', emissiveIntensity: .5 }); lamps.push(recStrip);
+const strip = new THREE.CylinderGeometry(1.41, 1.41, .03, 48, 1, true, -Math.PI / 2.6, Math.PI / 1.3); mesh(strip, recStrip, 0, .12, -.95, rec, false);
+
+function makePerson(a) {
+  const root = new THREE.Group();
+  const shirt = std({ color: a.shirt, roughness: .75 }), pants = std({ color: a.pants, roughness: .8 }), skin = M.skin[a.skin], hairM = std({ color: a.hair, roughness: .6 });
+  const hips = new THREE.Group(); root.add(hips);
+  const torso = mesh(new THREE.CapsuleGeometry(.17, .3, 6, 16), shirt, 0, .33, 0, hips); torso.scale.z = .72;
+  mesh(new THREE.CylinderGeometry(.055, .06, .08, 12), skin, 0, .6, 0, hips);
+  const head = new THREE.Group(); head.position.y = .76; hips.add(head);
+  mesh(new THREE.SphereGeometry(.14, 24, 18), skin, 0, 0, 0, head);
+  const hairCap = new THREE.SphereGeometry(.152, 24, 14, 0, Math.PI * 2, 0, Math.PI * .55); const hc = mesh(hairCap, hairM, 0, .015, -.012, head); hc.rotation.x = -.25;
+  if (a.long) { mesh(rbox(.27, .3, .08, .04), hairM, 0, -.1, -.1, head); }
+  [-1, 1].forEach(s => { mesh(new THREE.SphereGeometry(.018, 10, 8), std({ color: '#1a1a1a', roughness: .3 }), s * .05, .02, .128, head, false);
+    mesh(new THREE.SphereGeometry(.03, 10, 8), skin, s * .14, 0, 0, head, false); });
+  const nose = mesh(new THREE.SphereGeometry(.022, 10, 8), skin, 0, -.02, .138, head, false); nose.scale.set(.8, 1, 1);
+  const smile = mesh(new THREE.TorusGeometry(.03, .006, 6, 12, Math.PI), std({ color: '#7a3a2a' }), 0, -.055, .127, head, false); smile.rotation.z = Math.PI;
+  if (a.acc === 'glasses') { [-1, 1].forEach(s => mesh(new THREE.TorusGeometry(.03, .006, 6, 16), M.blackMetal, s * .052, .02, .137, head, false));
+    mesh(new THREE.BoxGeometry(.035, .006, .006), M.blackMetal, 0, .022, .14, head, false); }
+  if (a.acc === 'headphones') { const hb = mesh(new THREE.TorusGeometry(.16, .014, 8, 24, Math.PI), M.blackMetal, 0, .02, 0, head); hb.rotation.y = Math.PI / 2;
+    [-1, 1].forEach(s => { const cup = mesh(new THREE.CylinderGeometry(.05, .05, .04, 16), std({ color: '#bb9af7', roughness: .5 }), s * .155, 0, 0, head); cup.rotation.z = Math.PI / 2; }); }
+  if (a.acc === 'cap') { mesh(new THREE.SphereGeometry(.155, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), std({ color: '#2ec4b6', roughness: .7 }), 0, .02, 0, head);
+    const brim = mesh(new THREE.CylinderGeometry(.11, .11, .015, 20, 1, false, -Math.PI / 2, Math.PI), std({ color: '#2ec4b6', roughness: .7 }), 0, .03, .12, head); brim.rotation.y = Math.PI; }
+  if (a.acc === 'tie') { mesh(new THREE.BoxGeometry(.04, .2, .01), std({ color: '#c8f04a', roughness: .6 }), 0, .42, .125, hips, false); }
+  const mkArm = (s) => { const sh = new THREE.Group(); sh.position.set(s * .22, .52, 0); hips.add(sh);
+    mesh(new THREE.CapsuleGeometry(.052, .26, 4, 10), shirt, 0, -.16, 0, sh); mesh(new THREE.CapsuleGeometry(.045, .2, 4, 10), skin, 0, -.4, 0, sh);
+    mesh(new THREE.SphereGeometry(.048, 10, 8), skin, 0, -.54, 0, sh); return sh; };
+  const mkLeg = (s) => { const hip = new THREE.Group(); hip.position.set(s * .09, 0, 0); hips.add(hip);
+    mesh(new THREE.CapsuleGeometry(.075, .28, 4, 10), pants, 0, -.2, 0, hip);
+    const knee = new THREE.Group(); knee.position.y = -.42; hip.add(knee);
+    mesh(new THREE.CapsuleGeometry(.065, .26, 4, 10), pants, 0, -.18, 0, knee);
+    mesh(rbox(.11, .07, .24, .03), M.shoe, 0, -.38, .05, knee); return { hip, knee }; };
+  const parts = { hips, head, lArm: mkArm(-1), rArm: mkArm(1), lLeg: mkLeg(-1), rLeg: mkLeg(1) };
+  const paper = mesh(new THREE.BoxGeometry(.21, .006, .29), M.white, 0, -.58, .1, parts.rArm, false); paper.visible = false; parts.paper = paper;
+  root.traverse(o => { if (o.isMesh) o.userData.agentId = a.id; });
+  return { root, parts };
+}
+
+function pose(p, mode, t) {
+  const P = p.parts;
+  if (mode === 'sit' || mode === 'type') {
+    P.hips.position.y = .56; P.lLeg.hip.rotation.x = P.rLeg.hip.rotation.x = -Math.PI / 2; P.lLeg.knee.rotation.x = P.rLeg.knee.rotation.x = Math.PI / 2;
+    const k = mode === 'type' ? Math.sin(t * 14) * .06 : 0;
+    P.lArm.rotation.x = -1.05 + k; P.rArm.rotation.x = -1.05 - k; P.lArm.rotation.z = .12; P.rArm.rotation.z = -.12;
+    P.head.rotation.x = mode === 'type' ? .08 + Math.sin(t * 2) * .03 : Math.sin(t * .8) * .05; P.head.rotation.y = mode === 'sit' ? Math.sin(t * .5) * .3 : 0;
+    P.hips.position.y += Math.sin(t * 2) * .004;
+  } else if (mode === 'walk') {
+    const s = Math.sin(t * 9); P.hips.position.y = .86 + Math.abs(Math.cos(t * 9)) * .03;
+    P.lLeg.hip.rotation.x = s * .5; P.rLeg.hip.rotation.x = -s * .5; P.lLeg.knee.rotation.x = Math.max(0, -s) * .6; P.rLeg.knee.rotation.x = Math.max(0, s) * .6;
+    P.lArm.rotation.x = -s * .45; P.rArm.rotation.x = P.paper.visible ? -.9 : s * .45; P.lArm.rotation.z = .06; P.rArm.rotation.z = -.06; P.head.rotation.set(0, 0, 0);
+  } else { // stand / talk
+    P.hips.position.y = .86; P.lLeg.hip.rotation.x = P.rLeg.hip.rotation.x = 0; P.lLeg.knee.rotation.x = P.rLeg.knee.rotation.x = 0;
+    P.lArm.rotation.x = 0; P.rArm.rotation.x = -.5 + Math.sin(t * 3) * .15; P.lArm.rotation.z = .08; P.rArm.rotation.z = -.08; P.head.rotation.x = Math.sin(t * 4) * .05;
+  }
+}
+
+const agentObjs = {};
+const raycastTargets = [];
+AGENTS.forEach(a => {
+  const [dx, dz, rot] = a.desk;
+  const d = desk(dx, dz, rot, screenTex(a.screen, a.color), { dual: a.dual, chair: a.chair, plant: ['rab', 'fin', 'ops', 'crm'].includes(a.id), screen2: a.dual ? screenTex(a.id === 'ops' ? 'chart' : a.id === 'sa' ? 'sheet' : 'code', a.color) : null,
+    mug: std({ color: a.color, roughness: .5 }) });
+  const p = makePerson(a);
+  p.root.userData.dynamic = true; scene.add(p.root);
+  const seat = new THREE.Vector3(0, 0, .62).applyAxisAngle(new THREE.Vector3(0, 1, 0), rot).add(new THREE.Vector3(dx, 0, dz));
+  p.root.position.copy(seat); p.root.rotation.y = rot + Math.PI;
+  // status ring
+  const ringMat = new THREE.MeshBasicMaterial({ color: STATUS[a.status][1], transparent: true, opacity: .8, depthWrite: false });
+  const ring = new THREE.Mesh(new THREE.RingGeometry(.42, .5, 40), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.y = .06; p.root.add(ring);
+  // label
+  const el = document.createElement('div'); el.className = 'tag';
+  el.innerHTML = `<div class="pill"><i></i>${a.name}</div><div class="sub">${a.role}</div>`;
+  el.addEventListener('click', e => { e.stopPropagation(); select(a.id); });
+  const label = new CSS2DObject(el); label.position.set(0, 1.62, 0); p.root.add(label);
+  // bubble
+  const bwrap = document.createElement('div'), bel = document.createElement('div'); bel.className = 'bubble'; bwrap.appendChild(bel);
+  const bubble = new CSS2DObject(bwrap); bubble.position.set(0, 2.25, 0); bubble.visible = false; p.root.add(bubble);
+  // invisible click hull
+  const hull = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 1.6, 8), new THREE.MeshBasicMaterial({ visible: false })); hull.position.y = .8; hull.userData.agentId = a.id; p.root.add(hull);
+  raycastTargets.push(hull);
+  const bb = new THREE.Box3().setFromObject(d), bs = bb.getSize(new THREE.Vector3()), bc = bb.getCenter(new THREE.Vector3());
+  const dh = new THREE.Mesh(new THREE.BoxGeometry(bs.x, bs.y, bs.z), new THREE.MeshBasicMaterial({ visible: false })); dh.position.copy(bc); dh.userData.agentId = a.id; dh.userData.dynamic = true; scene.add(dh); raycastTargets.push(dh);
+  const front = new THREE.Vector3(a.id === 'pm' ? 1.75 : 1.15, 0, .62).applyAxisAngle(new THREE.Vector3(0, 1, 0), rot).add(new THREE.Vector3(dx, 0, dz));
+  agentObjs[a.id] = { a, p, ring, ringMat, el, bel, bubble, label, seat, seatRot: rot + Math.PI, front, mode: a.status === 'working' ? 'type' : 'sit', path: null, log: [] };
+  setStatus(a.id, a.status, true);
+});
+
+/* ============================== UI ============================== */
+const teamList = document.getElementById('teamList'), detail = document.getElementById('detail'), feed = document.getElementById('feed');
+const initials = n => n.slice(0, 2).toUpperCase();
+function renderTeam() {
+  teamList.innerHTML = AGENTS.map(a => `<div class="member ${selected === a.id ? 'sel' : ''}" data-id="${a.id}">
+    <div class="av" style="background:${a.color}">${initials(a.name)}</div><div><div class="mname">${a.name}</div><div class="mrole">${a.role}</div></div>
+    <i class="dot s-${agentObjs[a.id].status}" title="${STATUS[agentObjs[a.id].status][0]}"></i></div>`).join('');
+  teamList.querySelectorAll('.member').forEach(m => m.onclick = () => select(m.dataset.id));
+}
+const now = () => new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+function logFeed(who, msg) { const d = document.createElement('div'); d.innerHTML = `<b>${who}</b> ${msg}`; feed.prepend(d); while (feed.children.length > 8) feed.lastChild.remove(); }
+function setStatus(id, st, silent) {
+  const o = agentObjs[id]; o.status = st; o.ringMat.color.set(STATUS[st][1]); o.el.querySelector('.pill i').style.background = STATUS[st][1];
+  if (!o.path) o.mode = st === 'working' ? 'type' : 'sit';
+  if (!silent) { renderTeam(); if (selected === id) renderDetail(); }
+}
+function say(id, text, ms = 3200) { const o = agentObjs[id]; o.bel.textContent = text; o.bubble.visible = true; o.label.visible = false;
+  clearTimeout(o.sayT); o.sayT = setTimeout(() => { o.bubble.visible = false; o.label.visible = true; }, ms);
+  o.log.unshift([now(), text]); if (selected === id) renderDetail(); }
+const OPTY = [];
+const STALE_DAYS = 14;
+function optyTable() {
+  return `<div class="kv"><b>Pipeline opty · peringatan jika &gt; ${STALE_DAYS} hari tanpa update</b>
+    ${OPTY.length ? '' : '<div class="log">Belum ada opty. Ketik di kolom tugas, misalnya: \"opty baru: fleet tracking 50 truk – PT Sinar\".</div>'}<table style="width:100%;border-collapse:collapse;font-size:11.5px">${OPTY.map(o => `<tr style="border-top:1px solid var(--line)">
+      <td style="padding:6px 4px"><div style="font-weight:700">${o.name}</div><div style="color:var(--quiet)">${o.client} · ${o.stage} · ${o.value}</div></td>
+      <td style="padding:6px 4px;text-align:right;white-space:nowrap;font-weight:700;color:${o.days > STALE_DAYS ? 'var(--err)' : 'var(--quiet)'}">${o.days > STALE_DAYS ? '⚠ ' : ''}${o.days} hari</td></tr>`).join('')}</table></div>`;
+}
+let selected = null;
+let tab = 'status', askMode = false;
+function renderInbox() { const box = document.getElementById('inboxQ'), n = QUESTIONS.length;
+  box.style.display = n ? 'block' : 'none'; box.textContent = `❓ ${n} pertanyaan dari tim menunggu jawaban`; box.onclick = () => { if (QUESTIONS[0]) select(QUESTIONS[0].agent); }; }
+function answerQ(qid, ans) {
+  const i = QUESTIONS.findIndex(q => q.id === qid); if (i < 0) return; const q = QUESTIONS[i]; QUESTIONS.splice(i, 1);
+  BRAIN[q.agent].memory.unshift(`Jawaban Ipul: "${q.text.slice(0, 60)}…" → ${ans}`);
+  if (q.onAnswer) { renderInbox(); renderTeam(); renderDetail(); q.onAnswer(ans); return; }
+  setStatus(q.agent, QUESTIONS.some(x => x.agent === q.agent) ? 'asking' : 'working'); say(q.agent, `Terima kasih, Pak! Saya catat di memory: ${ans}. Lanjut kerja 👍`);
+  logFeed(agentObjs[q.agent].a.name, `dapat jawaban: ${ans}`); renderInbox(); renderTeam(); renderDetail();
+}
+function askAgent(id, text) {
+  const B = BRAIN[id], a = agentObjs[id].a, mem = B.memory[(Math.random() * B.memory.length) | 0];
+  if (!mem) return `Saya belum punya catatan soal itu, Pak. Bisa diajari lewat tab Memory? Skill yang saya punya: ${B.skills.join(', ')}.`;
+  return `Dari catatan saya: ${mem}. Untuk detailnya saya pakai skill "${B.skills[0]}". (Simulasi; nanti dijawab Claude memakai memory & skill ${a.name}.)`;
+}
+function renderDetail() {
+  const o = agentObjs[selected]; if (!o) { detail.style.display = 'none'; return; } const a = o.a, B = BRAIN[a.id], myQ = QUESTIONS.filter(q => q.agent === a.id);
+  detail.style.display = 'block';
+  const body = tab === 'memory'
+    ? `<div class="kv"><b>Memory ${a.name} · ${B.memory.length} catatan</b>${B.memory.length ? B.memory.map(m => `<div class="mem">${m}</div>`).join('') : '<div class="log">Belum ada ingatan. Tambahkan di bawah, atau akan terisi otomatis dari jawabanmu.</div>'}</div>
+       <form id="memForm"><input id="memIn" placeholder="Tambah ingatan untuk ${a.name}…" autocomplete="off"><button class="pri">Simpan</button></form>`
+    : tab === 'skill'
+    ? `<div class="kv"><b>Skill sesuai bidang</b>${B.skills.map(k => `<span class="skill">${k}</span>`).join('')}</div>
+       <div class="kv" style="color:var(--quiet)">Tiap skill = satu file SKILL.md berisi langkah kerja, checklist kelengkapan, dan template. Agent memanggilnya sendiri saat tugasnya relevan.</div>`
+    : `<span class="chip"><i class="dot s-${o.status}" style="margin:0"></i>${STATUS[o.status][0]}</span>
+       ${myQ.map(q => `<div class="qbox">❓ ${q.text}<div class="opts">${q.options.map(op => `<button data-q="${q.id}" data-a="${op}">${op}</button>`).join('')}</div></div>`).join('')}
+       <div class="kv"><b>Sedang dikerjakan</b>${a.task || '<span style="color:var(--quiet)">Belum ada tugas.</span>'}</div>${a.id === 'crm' ? optyTable() : ''}
+       <div class="kv"><b>Catatan kerja</b>${o.log.length ? o.log.slice(0, 5).map(([t, m]) => `<div class="log"><i>${t}</i>${m}</div>`).join('') : '<div class="log">Belum ada catatan di sesi ini.</div>'}</div>
+       ${o.status === 'waiting' ? `<button class="pri" id="approve" style="width:100%;padding:10px;margin-top:4px">${a.id === 'crm' ? '✓ Ya, follow up opty yang telat' : '✓ Setujui hasil'}</button>` : ''}`;
+  detail.innerHTML = `<div class="head"><div class="av" style="background:${a.color}">${initials(a.name)}</div>
+    <div><div class="mname" style="font-size:16px">${a.name}</div><div class="mrole">${a.role}</div></div><button class="close" title="Tutup">×</button></div>
+    <div class="tabs">${[['status', 'Status'], ['memory', 'Memory'], ['skill', 'Skill']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    ${body}
+    <div class="tabs" style="margin-top:14px">${[['0', 'Beri tugas'], ['1', 'Tanya']].map(([k, l]) => `<button data-mode="${k}" class="${(+askMode) == k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <form id="taskForm" style="margin-top:6px"><input id="taskIn" placeholder="${askMode ? `Tanya ${a.name} soal ${a.role.toLowerCase()}…` : `Beri tugas ke ${a.name}…`}" autocomplete="off"><button class="pri">Kirim</button></form>
+    <div style="font-size:10.5px;color:var(--quiet);margin-top:8px">Prototipe: jawaban masih simulasi, belum tersambung ke Claude.</div>`;
+  detail.querySelector('.close').onclick = () => select(null);
+  detail.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; renderDetail(); });
+  detail.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { askMode = b.dataset.mode === '1'; renderDetail(); });
+  detail.querySelectorAll('[data-q]').forEach(b => b.onclick = () => answerQ(b.dataset.q, b.dataset.a));
+  const mf = detail.querySelector('#memForm'); if (mf) mf.onsubmit = e => { e.preventDefault(); const v = detail.querySelector('#memIn').value.trim(); if (!v) return;
+    B.memory.unshift(v); say(a.id, `Noted, saya ingat: "${v.slice(0, 50)}"`); logFeed(a.name, 'memory bertambah'); renderDetail(); };
+  const ap = detail.querySelector('#approve'); if (ap) ap.onclick = () => { setStatus(selected, 'idle');
+    if (a.id === 'crm') { OPTY.filter(o => o.days > STALE_DAYS).forEach(o => o.days = 0); say('crm', 'Siap! Saya follow up ke PIC-nya dan catat update-nya. 📌'); logFeed('Nadia', 'follow up opty yang telat, tanggal update direset'); }
+    else { say(selected, 'Terima kasih! Sudah saya terbitkan dan catat. ✅'); logFeed(a.name, 'hasil disetujui Ipul'); } renderDetail(); };
+  detail.querySelector('#taskForm').onsubmit = e => { e.preventDefault(); const v = detail.querySelector('#taskIn').value.trim(); if (!v) return; const id = selected;
+    if (askMode) { say(id, askAgent(id, v), 6000); logFeed(a.name, 'menjawab pertanyaan Ipul'); return; }
+    if (id === 'pm') { a.task = v; setStatus('pm', 'working'); say('pm', 'Siap Pak, saya cek dulu ini tugas siapa…'); logFeed('Sari', 'menerima tugas dari Ipul');
+      detail.querySelector('#taskIn').value = ''; pmQueue = pmQueue.then(() => delegate(v)).catch(console.error); return; }
+    if (id === 'crm' && /opty|prospek|peluang|lead\b|tender/i.test(v)) createOpty(v);
+    a.task = v; setStatus(id, 'working'); say(id, `Siap, Pak Ipul! Saya kerjakan: "${v.slice(0, 60)}"`); logFeed(a.name, `menerima tugas baru`);
+    setTimeout(() => { // simulate: agent checks completeness against its skill checklist, asks if something is missing
+      if (Math.random() < .5) { const q = { id: 'q' + Date.now(), agent: id, text: `Untuk "${v.slice(0, 40)}": ada data yang kurang di checklist skill ${BRAIN[id].skills[0]}. Boleh saya pakai asumsi standar dari memory?`, options: ['Ya, pakai asumsi', 'Tunggu, saya lengkapi'] };
+        QUESTIONS.push(q); setStatus(id, 'asking'); say(id, '❓ Ada data yang kurang, saya tanya dulu ya Pak.'); logFeed(agentObjs[id].a.name, 'bertanya ke Ipul'); renderInbox(); }
+      else { setStatus(id, 'waiting'); say(id, 'Selesai & lolos checklist. Mohon dicek & disetujui ya 🙏'); logFeed(agentObjs[id].a.name, 'menunggu persetujuan'); } }, 6000); };
+}
+const tmpV = new THREE.Vector3();
+let camTween = null;
+function focusOn(pos, dist = 9) { const dir = camera.position.clone().sub(controls.target).normalize(); camTween = { t: 0, fromP: camera.position.clone(), fromT: controls.target.clone(),
+  toT: pos.clone().setY(.8), toP: pos.clone().setY(.8).add(dir.multiplyScalar(dist)) }; }
+function select(id) { if (id !== selected) { tab = 'status'; askMode = false; } selected = id; renderTeam(); renderDetail(); if (id) focusOn(agentObjs[id].p.root.position); }
+
+// click picking
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(); let downAt = null;
+renderer.domElement.addEventListener('pointerdown', e => downAt = [e.clientX, e.clientY]);
+renderer.domElement.addEventListener('pointerup', e => { if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+  mouse.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(mouse, camera);
+  const hit = ray.intersectObjects(raycastTargets, false)[0]; if (hit) select(hit.object.userData.agentId); });
+
+// buttons
+let night = false;
+document.getElementById('btnNight').onclick = e => { night = !night; e.currentTarget.textContent = night ? '☀ Mode siang' : '🌙 Mode malam'; };
+let lite = false;
+document.getElementById('btnLite').onclick = e => { lite = !lite; sun.castShadow = !lite; renderer.setPixelRatio(lite ? 1 : Math.min(devicePixelRatio, 1.5)); renderer.setSize(innerWidth, innerHeight);
+  e.currentTarget.textContent = lite ? '✨ Mode bagus' : '⚡ Mode ringan'; };
+document.getElementById('btnReset').onclick = () => { camTween = { t: 0, fromP: camera.position.clone(), fromT: controls.target.clone(), toP: CAM_HOME.clone(), toT: TARGET_HOME.clone() }; };
+
+/* ============================== WALKING / DEMO ============================== */
+const BACK_LANE = 8.25; // walkway behind the second desk row
+const laneFor = (z1, z2) => (z1 > 6 && z2 > 6) ? BACK_LANE : AISLE_Z;
+function routeTo(id, dest, after) {
+  const o = agentObjs[id], side = o.front, L = laneFor(side.z, dest.z);
+  o.path = [side.clone(), new THREE.Vector3(side.x, 0, L), new THREE.Vector3(dest.x, 0, L), dest.clone()]; o.after = after; o.mode = 'walk';
+}
+function routeHome(id, after) {
+  const o = agentObjs[id], cur = o.p.root.position.clone(), L = laneFor(cur.z, o.front.z);
+  o.path = [new THREE.Vector3(cur.x, 0, L), new THREE.Vector3(o.front.x, 0, L), o.front.clone(), o.seat.clone()];
+  o.after = () => { o.p.root.rotation.y = o.seatRot; o.mode = o.status === 'working' ? 'type' : 'sit'; after && after(); };
+}
+const wait = ms => new Promise(r => setTimeout(r, ms));
+// Safety net: if the tab is hidden (no animation frames), finish the walk after its expected time
+function guard(id, resolve) {
+  const o = agentObjs[id]; let len = 0, prev = o.p.root.position.clone();
+  (o.path || []).forEach(pt => { len += prev.distanceTo(pt); prev = pt; });
+  const t = setTimeout(() => { if (!o.path) return; const last = o.path[o.path.length - 1]; o.p.root.position.copy(last); o.path = null;
+    const f = o.after; o.after = null; o.mode = 'stand'; f && f(); }, len / 1.7 * 1000 + 2500);
+  return () => { clearTimeout(t); resolve(); };
+}
+const walk = (id, dest) => new Promise(r => { routeTo(id, dest, null); agentObjs[id].after = guard(id, r); });
+const home = id => new Promise(r => { routeHome(id, null); const o = agentObjs[id], inner = o.after; const done = guard(id, r); o.after = () => { inner(); done(); }; });
+/* ---- Sari (PM) membagi tugas ke agent yang tepat ---- */
+let pmQueue = Promise.resolve();
+const ROUTES = [
+  { re: /opty|prospek|peluang|\blead\b|tender|calon klien/i, to: 'crm', label: 'opty baru' },
+  { re: /\brab\b|anggaran|estimasi|hitung biaya|penawaran harga/i, to: 'rab', label: 'RAB' },
+  { re: /invoice|tagih|faktur/i, to: 'inv', label: 'invoice' },
+  { re: /transfer|bayar|lunas|\bkas\b|pengeluaran|pemasukan|keuangan/i, to: 'fin', label: 'keuangan' },
+  { re: /deploy|server|vps|backup|hosting|domain/i, to: 'ops', label: 'server/deploy' },
+  { re: /fitur|\bbug\b|\bkode\b|coding|program|aplikasi|dashboard|website|\bapi\b/i, to: 'prog', label: 'pengembangan' },
+  { re: /arsitektur|solusi|\bbom\b|desain sistem/i, to: 'sa', label: 'solusi' },
+];
+function createOpty(v) {
+  const text = v.replace(/^(ada\s+)?(opty|prospek|peluang)(\s+baru)?\s*:?\s*/i, '');
+  const cm = text.match(/\b(PT|CV|RS|PD|UD|Bank|Dinas)\.?\s+[A-Z][\w&.]*(?:\s+[A-Z][\w&.]*)*/);
+  const vm = text.match(/(\d+(?:[.,]\d+)?)\s*(jt|juta|miliar|m)\b/i);
+  const name = (cm ? text.replace(cm[0], '') : text).replace(/,?\s*(perkiraan|nilai|sekitar|estimasi)?\s*(rp\.?\s*)?\d+(?:[.,]\d+)?\s*(jt|juta|miliar|m)\b/i, '').replace(/[,–-]\s*(?=,|$)/g, '').replace(/\s*[,–-]\s*$/, '').trim() || text;
+  OPTY.unshift({ name: name.slice(0, 60), client: cm ? cm[0] : '–', stage: 'Lead', value: vm ? `Rp ${vm[1]} ${/^m|miliar/i.test(vm[2]) ? 'M' : 'jt'}` : '–', days: 0 });
+  logFeed('Nadia', `opty dibuat: ${OPTY[0].name}`); if (selected === 'crm') renderDetail();
+}
+async function handoff(from, to, text) {
+  const S = agentObjs; S[from].p.parts.paper.visible = true; await walk(from, S[to].front);
+  S[from].p.parts.paper.visible = false; say(from, text); await wait(1500); await home(from);
+}
+async function assign(to, v, label) {
+  const T = agentObjs[to].a; logFeed('Sari', `meneruskan ${label || 'tugas'} ke ${T.name}`); say('pm', `Ini ${label || 'tugas'}, saya antar ke ${T.name}.`);
+  await handoff('pm', to, `${T.name}, ada tugas dari Pak Ipul: "${v.slice(0, 50)}"`);
+  setStatus('pm', 'idle'); agentObjs.pm.a.task = ''; T.task = v; setStatus(to, 'working'); say(to, 'Siap, saya kerjakan!');
+  if (to === 'crm') {
+    createOpty(v); await wait(2200); say('crm', 'Opty sudah dicatat (tahap Lead). Saya serahkan ke Fajar untuk dibedah.');
+    await handoff('crm', 'sa', 'Mas Fajar, tolong bedah opty baru ini ya.'); setStatus('crm', 'idle'); agentObjs.crm.a.task = '';
+    agentObjs.sa.a.task = 'Bedah opty: ' + v; setStatus('sa', 'working'); say('sa', 'Siap, saya bedah kebutuhan & solusinya.'); logFeed('Fajar', 'mulai membedah opty'); await wait(2600);
+    QUESTIONS.push({ id: 'q' + Date.now(), agent: 'sa', text: `Untuk bedah opty "${v.slice(0, 45)}": berapa jumlah unit/lokasi dan target waktunya?`, options: ['Nanti saya jelaskan di chat Fajar', 'Pakai asumsi standar dulu'] });
+    setStatus('sa', 'asking'); say('sa', '❓ Ada data yang kurang untuk bedah opty, saya tanya dulu ya Pak.'); logFeed('Fajar', 'bertanya ke Ipul'); renderInbox();
+  } else {
+    setTimeout(() => { setStatus(to, 'waiting'); say(to, 'Selesai. Mohon dicek & disetujui ya Pak 🙏'); logFeed(T.name, 'menunggu persetujuan'); }, 6000);
+  }
+}
+async function delegate(v) {
+  const r = ROUTES.find(x => x.re.test(v));
+  if (r) return assign(r.to, v, r.label);
+  const map = { Nadia: 'crm', Fajar: 'sa', Budi: 'rab', Rina: 'inv', Dewi: 'fin', Raka: 'prog', Adit: 'ops' };
+  QUESTIONS.push({ id: 'q' + Date.now(), agent: 'pm', text: `Tugas "${v.slice(0, 50)}" mau saya serahkan ke siapa, Pak?`,
+    options: ['Nadia (opty)', 'Fajar (solusi)', 'Budi (RAB)', 'Rina (invoice)', 'Dewi (keuangan)', 'Raka (coding)', 'Adit (server)'],
+    onAnswer: ans => { const to = map[ans.split(' ')[0]]; if (to) pmQueue = pmQueue.then(() => assign(to, v)).catch(console.error); } });
+  setStatus('pm', 'asking'); say('pm', '❓ Saya belum yakin ini tugas siapa. Saya tanya dulu ya Pak.'); logFeed('Sari', 'bertanya: tugas ini untuk siapa?'); renderInbox();
+}
+let demoRunning = false;
+document.getElementById('btnDemo').onclick = async () => {
+  if (demoRunning) return; demoRunning = true; const btn = document.getElementById('btnDemo'); btn.textContent = '⏳ Demo berjalan…';
+  const S = agentObjs;
+  logFeed('Demo', 'contoh alur (tidak menyimpan data)');
+  say('crm', 'Opty baru dicatat: PT Maju · Lead · 20 GPS tracker. Saya teruskan ke Fajar.'); setStatus('crm', 'working'); logFeed('Nadia', 'opty dibuat (create)'); await wait(2200);
+  S.crm.p.parts.paper.visible = true; await walk('crm', S.sa.front);
+  say('crm', 'Mas Fajar, tolong dibedah ya opty ini.'); say('sa', 'Siap, saya bedah kebutuhan & solusinya.'); S.crm.p.parts.paper.visible = false; await wait(1600);
+  await home('crm'); setStatus('crm', 'idle'); setStatus('sa', 'working'); logFeed('Fajar', 'membedah opty: kebutuhan, arsitektur, BoM'); await wait(2400);
+  setStatus('sa', 'asking'); say('sa', '❓ Pak Ipul, lokasi gudang PT Maju ada sinyal 4G? Checklist bedah-opty saya belum lengkap.'); logFeed('Fajar', 'bertanya ke Ipul'); await wait(3000);
+  logFeed('Ipul', 'menjawab: ada, sinyal 4G bagus'); setStatus('sa', 'working'); say('sa', 'Siap, saya catat di memory. Lanjut desain 👍'); await wait(2200);
+  say('sa', 'Solusi: GPS 4G + MQTT + dashboard. BoM siap, risiko: sinyal di gudang.'); logFeed('Nadia', 'opty di-update → Kualifikasi'); await wait(1800);
+  S.sa.p.parts.paper.visible = true; await walk('sa', S.rab.front); say('rab', 'BoM diterima, saya hitung RAB-nya.'); S.sa.p.parts.paper.visible = false; await wait(1500);
+  await home('sa'); setStatus('sa', 'idle'); setStatus('rab', 'working'); logFeed('Budi', 'menyusun RAB…'); await wait(3000);
+  say('rab', 'RAB selesai: Rp 48.950.000 (termasuk PPN). Ke Rina untuk invoice.'); logFeed('Nadia', 'opty di-update → Proposal');
+  S.rab.p.parts.paper.visible = true; await walk('rab', S.inv.front); say('inv', 'Oke, saya buat INV/2026/11/015.'); S.rab.p.parts.paper.visible = false; await wait(1500);
+  await home('rab'); setStatus('rab', 'idle'); setStatus('inv', 'working'); await wait(2500);
+  setStatus('inv', 'waiting'); say('inv', 'Invoice siap. Menunggu persetujuan Pak Ipul.'); logFeed('Rina', 'invoice menunggu persetujuan'); await wait(2600);
+  setStatus('inv', 'idle'); say('inv', 'Disetujui ✅ Saya kabari Dewi untuk dicatat.'); logFeed('Ipul', 'menyetujui invoice');
+  S.inv.p.parts.paper.visible = true; await walk('inv', S.fin.front); say('fin', 'Dicatat sebagai piutang. Saldo kas diperbarui.'); S.inv.p.parts.paper.visible = false; setStatus('fin', 'working'); await wait(1800);
+  await home('inv'); await wait(1500); setStatus('fin', 'idle'); logFeed('Dewi', 'piutang PT Maju tercatat'); logFeed('Nadia', 'opty PT Maju → Menang (closed won)');
+  AGENTS.forEach(a => setStatus(a.id, 'idle')); renderTeam();
+  btn.textContent = '▶ Demo alur: Opty → SA → RAB → Invoice → Finance'; demoRunning = false;
+};
+
+/* ============================== LOOP ============================== */
+const clock = new THREE.Clock();
+let fpsN = 0, fpsT = 0; const fpsEl = document.getElementById('fps');
+function frame() {
+  const rawDt = clock.getDelta(), dt = Math.min(rawDt, .05), t = clock.elapsedTime;
+  fpsN++; fpsT += rawDt; if (fpsT > 1) { fpsEl.textContent = Math.round(fpsN / fpsT); fpsN = 0; fpsT = 0; }
+  // camera tween
+  if (camTween) { camTween.t = Math.min(1, camTween.t + dt * 1.4); const k = 1 - Math.pow(1 - camTween.t, 3);
+    camera.position.lerpVectors(camTween.fromP, camTween.toP, k); controls.target.lerpVectors(camTween.fromT, camTween.toT, k); if (camTween.t >= 1) camTween = null; }
+  controls.update();
+  // agents
+  for (const id in agentObjs) { const o = agentObjs[id];
+    if (o.path) { const target = o.path[0], pos = o.p.root.position; tmpV.subVectors(target, pos); tmpV.y = 0; const d = tmpV.length();
+      if (d < .05) { o.path.shift(); if (!o.path.length) { o.path = null; const f = o.after; o.after = null; o.mode = 'stand'; f && f(); } }
+      else { const step = Math.min(d, Math.min(rawDt, .6) * 1.7); pos.addScaledVector(tmpV.normalize(), step); const want = Math.atan2(tmpV.x, tmpV.z);
+        let diff = want - o.p.root.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff)); o.p.root.rotation.y += diff * Math.min(1, rawDt * 10); } }
+    pose(o.p, o.mode, t + id.length);
+    o.ringMat.opacity = .45 + .35 * (o.status === 'working' || o.status === 'waiting' ? (Math.sin(t * 4) + 1) / 2 : .3);
+    o.ring.scale.setScalar(o.status === 'waiting' ? 1 + .06 * Math.sin(t * 6) : 1); }
+  fires.forEach((f, i) => { f.scale.y = .8 + .35 * Math.sin(t * 12 + i * 1.7); f.position.y = .5 + .03 * Math.sin(t * 9 + i); });
+  fireLight.intensity = (night ? 2.2 : .6) + .3 * Math.sin(t * 17);
+  rackFace.emissiveIntensity = .7 + .3 * Math.sin(t * 6);
+  // day / night blend
+  const n = night ? 1 : 0; dayNight += (n - dayNight) * Math.min(1, dt * 2.5);
+  scene.background.lerpColors(BG_DAY, BG_NIGHT, dayNight);
+  hemi.intensity = .9 - .65 * dayNight; sun.intensity = 2.2 - 1.9 * dayNight; scene.environmentIntensity = .55 - .35 * dayNight;
+  lamps.forEach(l => { if (l.isPointLight) l.intensity = 1.2 + 5 * dayNight; else l.emissiveIntensity = .5 + 1.6 * dayNight; });
+  screens.forEach(s => s.emissiveIntensity = .85 + .5 * dayNight);
+  renderer.render(scene, camera); labelRenderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+let dayNight = 0;
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); labelRenderer.setSize(innerWidth, innerHeight); });
+/* ---- merge static meshes by material: thousands of draw calls -> a few dozen ---- */
+function mergeStatic() {
+  scene.updateMatrixWorld(true);
+  const buckets = new Map(), victims = [];
+  scene.traverse(o => {
+    if (!o.isMesh || Array.isArray(o.material) || o.material.visible === false) return;
+    for (let q = o; q; q = q.parent) if (q.userData.dynamic) return;
+    const key = o.material.uuid + '|' + (+o.castShadow) + (+o.receiveShadow);
+    let g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+    if (!g.attributes.uv || !g.attributes.normal) return;
+    g.clearGroups(); g.applyMatrix4(o.matrixWorld);
+    if (!buckets.has(key)) buckets.set(key, { mat: o.material, cast: o.castShadow, recv: o.receiveShadow, geos: [] });
+    buckets.get(key).geos.push(g); victims.push(o);
+  });
+  victims.forEach(o => o.parent.remove(o));
+  let n = 0;
+  buckets.forEach(b => { const merged = mergeGeometries(b.geos, false); if (!merged) return; const m = new THREE.Mesh(merged, b.mat);
+    m.castShadow = b.cast; m.receiveShadow = b.recv; m.matrixAutoUpdate = false; scene.add(m); n++; });
+  return [victims.length, n];
+}
+const [before, after] = mergeStatic();
+console.log(`[kantor] merged ${before} meshes into ${after} draw calls`);
+renderTeam(); renderInbox(); logFeed('Sistem', `kantor dibuka · ${AGENTS.length} agent online`); if (QUESTIONS.length) logFeed('Sistem', `${QUESTIONS.length} pertanyaan dari tim menunggu jawaban`);
+function staleReminder() { if (demoRunning) return; const st = OPTY.filter(o => o.days > STALE_DAYS); if (!st.length) return;
+  const o = st[(Math.random() * st.length) | 0]; setStatus('crm', 'waiting');
+  say('crm', `⚠ Opty "${o.name}" (${o.client}) belum di-update ${o.days} hari. Mau saya follow up?`, 5000); logFeed('Nadia', `pengingat: ${o.client} ${o.days} hari tanpa update`); }
+setTimeout(staleReminder, 4000); setInterval(staleReminder, 45000);
+frame();
+const ld = document.getElementById('loading'); ld.style.opacity = 0; setTimeout(() => ld.remove(), 600);
+</script>
+</body>
+</html>
